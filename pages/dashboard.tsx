@@ -1,79 +1,87 @@
-// pages/invest.tsx
-
-import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+// pages/dashboard.tsx
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { supabase } from "../lib/supabase";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-export default function Invest() {
-  const [amount, setAmount] = useState("");
-  const [phase, setPhase] = useState("phase1");
-  const [message, setMessage] = useState("");
+export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [investments, setInvestments] = useState<any[]>([]);
+  const [portfolioValue, setPortfolioValue] = useState<number>(0);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    const fetchUserAndData = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-    const { data: sessionData } = await supabase.auth.getUser();
-    const user = sessionData?.user;
+      if (!user || error) {
+        router.push("/auth/login"); // Redirect if not logged in
+      } else {
+        setUser(user);
+        await fetchInvestments(user.id);
+        setLoading(false);
+      }
+    };
 
-    if (!user) {
-      router.push("/auth/login");
+    fetchUserAndData();
+  }, []);
+
+  const fetchInvestments = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("user_investments")
+      .select("*")
+      .eq("user_id", userId)
+      .order("start_date", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching investments:", error.message);
       return;
     }
 
-    const { error } = await supabase.from("user_investments").insert({
-      user_id: user.id,
-      amount,
-      phase,
-      status: "pending", // important: do not auto-approve
-      start_date: new Date(),
-    });
-
-    if (error) {
-      setMessage("❌ Failed to submit deposit");
-    } else {
-      setMessage("✅ Deposit submitted for approval");
-      setAmount("");
-    }
+    setInvestments(data || []);
+    const total = data?.reduce((sum, item) => sum + item.amount, 0) || 0;
+    setPortfolioValue(total);
   };
 
+  if (loading) return <p className="p-4">Loading...</p>;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-96">
-        <h2 className="text-xl font-bold mb-4">💸 Submit a New Investment</h2>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-3xl mx-auto bg-white rounded shadow-md p-6">
+        <h1 className="text-2xl font-bold mb-4">📊 Dashboard</h1>
 
-        <input
-          type="number"
-          placeholder="Amount (INR)"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="mb-2 p-2 border w-full"
-          required
-        />
+        <div className="mb-6">
+          <p className="text-lg font-semibold">💰 Portfolio Value: ₹{portfolioValue.toFixed(2)}</p>
+          <p className="text-sm text-green-600">📈 Gains: +10% Monthly (estimated)</p>
+        </div>
 
-        <select
-          value={phase}
-          onChange={(e) => setPhase(e.target.value)}
-          className="mb-4 p-2 border w-full"
-        >
-          <option value="phase1">Phase 1</option>
-          <option value="phase2">Phase 2</option>
-        </select>
+        <div>
+          <h2 className="text-xl font-semibold mb-2">🧾 Recent Activity</h2>
+          {investments.length === 0 ? (
+            <p>No investments yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {investments.map((inv) => (
+                <li key={inv.id} className="p-3 border rounded bg-gray-50">
+                  ₹{inv.amount} - {inv.phase} - {new Date(inv.start_date).toLocaleDateString()}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-        <button
-          type="submit"
-          className="bg-green-500 text-white p-2 w-full rounded"
-        >
-          Submit
-        </button>
-
-        {message && <p className="mt-3 text-sm text-center">{message}</p>}
-      </form>
+        <div className="mt-6 text-center">
+          <a
+            href="/invest"
+            className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            ➕ Make New Investment
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
