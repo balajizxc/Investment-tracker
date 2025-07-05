@@ -1,15 +1,30 @@
-import Link from 'next/link';
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function Home() {
-  return (
-    <div style={{ textAlign: 'center', padding: '2rem' }}>
-      <h1>📈 Investment Tracker</h1>
-      <p>Track your portfolio securely</p>
-      <Link href="/dashboard">
-        <button style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}>
-          Go to Dashboard
-        </button>
-      </Link>
-    </div>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        router.push("/dashboard");
+      } else {
+        router.push("/auth/login");
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
+  return <div className="text-center mt-10">Redirecting...</div>;
 }
