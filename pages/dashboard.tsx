@@ -1,52 +1,62 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function Dashboard() {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState("");
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const getSessionFromStorage = () => {
-      const token = localStorage.getItem("user_email");
-      if (!token) {
-        router.push("/auth/login");
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        setUserEmail(session.user.email || "");
       } else {
-        setUserEmail(token);
+        router.push("/auth/login"); // redirect to login if not authenticated
       }
+
+      setLoading(false);
     };
 
-    getSessionFromStorage();
+    checkSession();
   }, [router]);
 
-  if (!userEmail) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-600 text-lg">
-        Loading dashboard...
-      </div>
-    );
-  }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
+
+  if (loading) return <div className="text-center mt-10">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow">
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow">
         <h1 className="text-2xl font-bold mb-4">📊 Dashboard</h1>
 
-        <p className="mb-2 text-sm text-gray-500">
-          Logged in as: <span className="font-semibold">{userEmail}</span>
-        </p>
+        <p className="mb-4">Logged in as: <strong>{userEmail}</strong></p>
 
-        <div className="border-t mt-4 pt-4">
-          <p className="mb-1">💰 <strong>Portfolio Value:</strong> $0.00</p>
-          <p className="mb-1">📈 <strong>Gains:</strong> +0%</p>
-          <p className="mb-1">🧾 <strong>Recent Activity:</strong> None</p>
+        <div className="mb-4">
+          <p className="text-lg">💰 Portfolio Value: <strong>$0.00</strong></p>
+          <p className="text-lg">📈 Gains: <strong>+0%</strong></p>
+        </div>
+
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold mb-2">🧾 Recent Activity:</h2>
+          <p className="text-gray-600">None</p>
         </div>
 
         <button
-          onClick={() => {
-            localStorage.removeItem("user_email");
-            router.push("/auth/login");
-          }}
-          className="mt-6 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          onClick={handleLogout}
+          className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
         >
           Logout
         </button>
