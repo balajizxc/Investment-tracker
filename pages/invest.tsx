@@ -7,9 +7,24 @@ import { supabase } from "../lib/supabase";
 export default function Invest() {
   const [amount, setAmount] = useState<number>(0);
   const [phase, setPhase] = useState<string>("phase1");
+  const [method, setMethod] = useState<string>("upi");
   const [message, setMessage] = useState<string>("");
-
   const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to login if not authenticated
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/auth/login");
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,13 +40,13 @@ export default function Invest() {
       return;
     }
 
-    // Insert the investment
     const { error } = await supabase.from("user_investments").insert([
       {
         user_id: user.id,
         amount,
         phase,
-        status: "pending",
+        method,
+        status: "pending", // Manually reviewed later
         start_date: new Date(),
       },
     ]);
@@ -40,8 +55,8 @@ export default function Invest() {
       console.error("Insert error:", error.message);
       setMessage("❌ Failed to submit deposit");
     } else {
-      setMessage("✅ Deposit submitted for approval");
-      setAmount(0);
+      setMessage("✅ Investment submitted and pending approval");
+      setAmount(0); // Reset amount field
     }
   };
 
@@ -51,7 +66,7 @@ export default function Invest() {
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded shadow-md w-full max-w-md"
       >
-        <h2 className="text-xl font-bold mb-4">💸 Submit a New Investment</h2>
+        <h2 className="text-xl font-bold mb-4">💸 Submit New Investment</h2>
 
         <input
           type="number"
@@ -72,6 +87,16 @@ export default function Invest() {
           <option value="phase3">Phase 3</option>
         </select>
 
+        <select
+          value={method}
+          onChange={(e) => setMethod(e.target.value)}
+          className="mb-4 p-2 border w-full rounded"
+        >
+          <option value="upi">UPI</option>
+          <option value="imps">IMPS</option>
+          <option value="bank_transfer">Bank Transfer</option>
+        </select>
+
         <button
           type="submit"
           className="bg-green-600 text-white p-2 w-full rounded hover:bg-green-700"
@@ -79,8 +104,10 @@ export default function Invest() {
           Submit
         </button>
 
-        {message && <p className="mt-4 text-center">{message}</p>}
+        {message && (
+          <p className="mt-4 text-center font-medium">{message}</p>
+        )}
       </form>
     </div>
   );
-}
+        }
