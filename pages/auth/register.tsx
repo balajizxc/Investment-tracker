@@ -11,16 +11,28 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { data, error } = await supabase.auth.signUp(
-      { email, password },
-      { data: { name } } // optional metadata
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        options: {
+          data: { name },
+        },
+      }),
+    });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      alert("✅ Registration successful! Check your email to verify.");
+    const data = await res.json();
+    if (res.ok) {
+      alert("✅ Registration successful! Please check your email to verify.");
       router.push("/auth/login");
+    } else {
+      setError(data?.error_description || "Registration failed");
     }
   };
 
