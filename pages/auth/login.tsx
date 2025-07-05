@@ -10,20 +10,22 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+        },
+        body: JSON.stringify({ email, password }),
+      }
+    );
 
     const data = await res.json();
 
     if (res.ok) {
-      // Save user email in localStorage for session tracking
       localStorage.setItem("user_email", email);
       router.push("/dashboard");
     } else {
@@ -33,7 +35,10 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md w-80">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-6 rounded shadow-md w-80"
+      >
         <h2 className="text-xl font-bold mb-4">Login</h2>
 
         <input
@@ -54,16 +59,31 @@ export default function Login() {
           required
         />
 
-        {error && <p className="text-red-500 mb-2">{error}</p>}
+        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
-        <button type="submit" className="bg-blue-500 text-white p-2 w-full rounded">
+        <button
+          type="submit"
+          className="bg-blue-500 text-white p-2 w-full rounded hover:bg-blue-600"
+        >
           Login
         </button>
 
         <p className="mt-4 text-sm text-center">
           New user?{" "}
-          <a href="/auth/register" className="text-blue-600 hover:underline">
+          <a
+            href="/auth/register"
+            className="text-blue-600 hover:underline"
+          >
             Register here
+          </a>
+        </p>
+
+        <p className="mt-2 text-sm text-center">
+          <a
+            href="/auth/forgot-password"
+            className="text-blue-600 hover:underline"
+          >
+            Forgot your password?
           </a>
         </p>
       </form>
