@@ -83,7 +83,7 @@ export default function Login() {
             href="/auth/forgot-password"
             className="text-blue-600 hover:underline"
           >
-            Forgot your password?
+            Auto Login Reset
           </a>
         </p>
       </form>
