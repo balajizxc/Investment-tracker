@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+// pages/invest.tsx
+
+import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/router";
 
@@ -7,62 +9,71 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function Dashboard() {
-  const [investments, setInvestments] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+export default function Invest() {
+  const [amount, setAmount] = useState("");
+  const [phase, setPhase] = useState("phase1");
+  const [message, setMessage] = useState("");
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: sessionData } = await supabase.auth.getUser();
-      const user = sessionData?.user;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-      if (!user) {
-        router.push("/auth/login");
-        return;
-      }
+    const { data: sessionData } = await supabase.auth.getUser();
+    const user = sessionData?.user;
 
-      const { data, error } = await supabase
-        .from("user_investments")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("start_date", { ascending: false });
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
 
-      if (data) {
-        setInvestments(data);
-        const totalAmount = data.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
-        setTotal(totalAmount);
-      }
+    const { error } = await supabase.from("user_investments").insert({
+      user_id: user.id,
+      amount,
+      phase,
+      status: "pending", // important: do not auto-approve
+      start_date: new Date(),
+    });
 
-      setLoading(false);
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) return <p className="p-4">Loading dashboard...</p>;
+    if (error) {
+      setMessage("❌ Failed to submit deposit");
+    } else {
+      setMessage("✅ Deposit submitted for approval");
+      setAmount("");
+    }
+  };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">📊 Dashboard</h1>
-      <p className="text-lg mb-2">💰 Portfolio Value: ₹{total.toFixed(2)}</p>
-      <p className="text-green-600 mb-4">📈 Gains: +10% Monthly (estimated)</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-96">
+        <h2 className="text-xl font-bold mb-4">💸 Submit a New Investment</h2>
 
-      <h2 className="text-xl font-semibold mb-2">🧾 Recent Activity</h2>
-      {investments.length === 0 ? (
-        <p>No investments yet.</p>
-      ) : (
-        <ul className="space-y-2">
-          {investments.map((inv) => (
-            <li key={inv.id} className="p-3 bg-white shadow rounded">
-              ₹{inv.amount} - {inv.status} ({inv.phase})
-              <br />
-              <small>{new Date(inv.start_date).toLocaleDateString()}</small>
-            </li>
-          ))}
-        </ul>
-      )}
+        <input
+          type="number"
+          placeholder="Amount (INR)"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="mb-2 p-2 border w-full"
+          required
+        />
+
+        <select
+          value={phase}
+          onChange={(e) => setPhase(e.target.value)}
+          className="mb-4 p-2 border w-full"
+        >
+          <option value="phase1">Phase 1</option>
+          <option value="phase2">Phase 2</option>
+        </select>
+
+        <button
+          type="submit"
+          className="bg-green-500 text-white p-2 w-full rounded"
+        >
+          Submit
+        </button>
+
+        {message && <p className="mt-3 text-sm text-center">{message}</p>}
+      </form>
     </div>
   );
 }
