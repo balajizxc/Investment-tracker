@@ -35,7 +35,7 @@ export default function Invest() {
     ]);
 
     if (error) {
-      console.error("Insert error:", error.message);
+      console.error("Insert error:", error);
       setMessage("❌ Failed to submit deposit");
     } else {
       setMessage("✅ Deposit submitted for approval");
