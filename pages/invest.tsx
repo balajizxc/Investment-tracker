@@ -14,27 +14,24 @@ export default function Invest() {
 
     // ✅ Get logged-in user
     const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+  data: { user },
+  error: userError,
+} = await supabase.auth.getUser();
 
-    if (userError || !user) {
-      setMessage("❌ User not logged in");
-      return;
-    }
+if (userError || !user) {
+  setMessage("❌ User not logged in");
+  return;
+}
 
-    console.log("User UID:", user.id);
-
-    // ✅ Insert investment using 'uid'
-    const { error } = await supabase.from("user_investments").insert([
-      {
-        uid: user.id,
-        amount,
-        phase,
-        status: "pending",
-        start_date: new Date(),
-      },
-    ]);
+const { error } = await supabase.from("user_investments").insert([
+  {
+    user_id: user.id, // ✅ match your table column name
+    amount,
+    phase,
+    status: "pending",
+    start_date: new Date(),
+  },
+]);
 
     if (error) {
       console.error("Insert error:", error.message, error.details, error.hint);
