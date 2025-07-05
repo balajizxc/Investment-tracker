@@ -12,33 +12,34 @@ export default function Invest() {
     e.preventDefault();
     setMessage("");
 
-    // ✅ Get logged-in user
+    // ✅ Get the current logged-in user
     const {
-  data: { user },
-  error: userError,
-} = await supabase.auth.getUser();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-if (userError || !user) {
-  setMessage("❌ User not logged in");
-  return;
-}
+    if (userError || !user) {
+      setMessage("❌ User not logged in");
+      return;
+    }
 
-const { error } = await supabase.from("user_investments").insert([
-  {
-    user_id: user.id, // ✅ match your table column name
-    amount,
-    phase,
-    status: "pending",
-    start_date: new Date(),
-  },
-]);
+    // ✅ Insert the investment into Supabase
+    const { error } = await supabase.from("user_investments").insert([
+      {
+        user_id: user.id,        // ✅ Use user_id as per your table
+        amount: amount,
+        phase: phase,
+        status: "pending",
+        start_date: new Date(),
+      },
+    ]);
 
     if (error) {
-      console.error("Insert error:", error.message, error.details, error.hint);
+      console.error("Insert error:", error.message);
       setMessage("❌ Failed to submit deposit");
     } else {
       setMessage("✅ Deposit submitted for approval");
-      setAmount(0);
+      setAmount(0); // Reset the form
     }
   };
 
