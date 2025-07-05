@@ -1,4 +1,6 @@
-import { useState } from "react";
+// pages/invest.tsx
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
 
@@ -6,13 +8,13 @@ export default function Invest() {
   const [amount, setAmount] = useState<number>(0);
   const [phase, setPhase] = useState<string>("phase1");
   const [message, setMessage] = useState<string>("");
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
 
-    // ✅ Get the current logged-in user
     const {
       data: { user },
       error: userError,
@@ -23,12 +25,12 @@ export default function Invest() {
       return;
     }
 
-    // ✅ Insert the investment into Supabase
+    // Insert the investment
     const { error } = await supabase.from("user_investments").insert([
       {
-        user_id: user.id,        // ✅ Use user_id as per your table
-        amount: amount,
-        phase: phase,
+        user_id: user.id,
+        amount,
+        phase,
         status: "pending",
         start_date: new Date(),
       },
@@ -39,7 +41,7 @@ export default function Invest() {
       setMessage("❌ Failed to submit deposit");
     } else {
       setMessage("✅ Deposit submitted for approval");
-      setAmount(0); // Reset the form
+      setAmount(0);
     }
   };
 
