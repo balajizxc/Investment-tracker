@@ -1,33 +1,33 @@
+// pages/dashboard.tsx
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { createClient } from "@supabase/supabase-js";
 
+// Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export default function Dashboard() {
-  const [userEmail, setUserEmail] = useState("");
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    const getSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
 
-      if (session?.user) {
-        setUserEmail(session.user.email || "");
+      if (error || !data.session) {
+        router.push("/auth/login"); // Not logged in → redirect
       } else {
-        router.push("/auth/login"); // redirect to login if not authenticated
+        setUserEmail(data.session.user.email);
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
-    checkSession();
+    getSession();
   }, [router]);
 
   const handleLogout = async () => {
@@ -35,23 +35,25 @@ export default function Dashboard() {
     router.push("/auth/login");
   };
 
-  if (loading) return <div className="text-center mt-10">Loading...</div>;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading dashboard...</div>;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-6 rounded shadow w-full max-w-xl">
         <h1 className="text-2xl font-bold mb-4">📊 Dashboard</h1>
 
-        <p className="mb-4">Logged in as: <strong>{userEmail}</strong></p>
+        <p className="mb-2">Welcome, <strong>{userEmail}</strong></p>
 
         <div className="mb-4">
-          <p className="text-lg">💰 Portfolio Value: <strong>$0.00</strong></p>
-          <p className="text-lg">📈 Gains: <strong>+0%</strong></p>
+          <p>💰 Portfolio Value: <strong>$0.00</strong></p>
+          <p>📈 Gains: <strong>+0%</strong></p>
         </div>
 
         <div className="mb-4">
-          <h2 className="text-lg font-semibold mb-2">🧾 Recent Activity:</h2>
-          <p className="text-gray-600">None</p>
+          <h2 className="text-lg font-semibold">🧾 Recent Activity</h2>
+          <p className="text-gray-600">No recent activity.</p>
         </div>
 
         <button
