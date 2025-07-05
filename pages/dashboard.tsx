@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
 
-// ✅ Define the type for investment
+// ✅ Define the Investment type
 type Investment = {
   id: string;
   user_id: string;
