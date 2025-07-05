@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -9,27 +15,18 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
-        },
-        body: JSON.stringify({ email, password }),
-      }
-    );
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    const data = await res.json();
-
-    if (res.ok) {
-      localStorage.setItem("user_email", email);
-      router.push("/dashboard");
+    if (error) {
+      setError(error.message);
     } else {
-      setError(data?.error_description || "Login failed");
+      localStorage.setItem("user_email", email);
+      router.push("/dashboard"); // 🔁 Redirects user after login
     }
   };
 
@@ -70,20 +67,14 @@ export default function Login() {
 
         <p className="mt-4 text-sm text-center">
           New user?{" "}
-          <a
-            href="/auth/register"
-            className="text-blue-600 hover:underline"
-          >
+          <a href="/auth/register" className="text-blue-600 hover:underline">
             Register here
           </a>
         </p>
 
         <p className="mt-2 text-sm text-center">
-          <a
-            href="/auth/forgot-password"
-            className="text-blue-600 hover:underline"
-          >
-            Auto Login Reset
+          <a href="/auth/forgot-password" className="text-blue-600 hover:underline">
+            Forgot your password?
           </a>
         </p>
       </form>
