@@ -1,74 +1,83 @@
-// pages/invest.tsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-export default function InvestPage() {
-  const [amount, setAmount] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
+export default function Invest() {
+  const [amount, setAmount] = useState<number>(0);
+  const [phase, setPhase] = useState<string>("phase1");
+  const [message, setMessage] = useState<string>("");
   const router = useRouter();
 
-  useEffect(() => {
-    // Get current logged-in user ID
-    const getUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUserId(data.user.id);
-      } else {
-        router.push("/auth/login");
-      }
-    };
-    getUser();
-  }, []);
-
-  const handleInvest = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage("");
 
-    const res = await fetch("/api/invest", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount, user_id: userId }),
-    });
+    // ✅ Get the logged-in user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    const data = await res.json();
+    if (userError || !user) {
+      setMessage("❌ User not logged in");
+      return;
+    }
 
-    if (res.ok) {
-      setMessage("✅ Investment successful!");
-      setAmount("");
+    // ✅ Insert investment into Supabase
+    const { error } = await supabase.from("user_investments").insert([
+      {
+        user_id: user.id,
+        amount,
+        phase,
+        status: "pending",
+        start_date: new Date(),
+      },
+    ]);
+
+    if (error) {
+      console.error("Insert error:", error.message);
+      setMessage("❌ Failed to submit deposit");
     } else {
-      setMessage(`❌ Failed: ${data.message}`);
+      setMessage("✅ Deposit submitted for approval");
+      setAmount(0); // reset
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleInvest} className="bg-white p-6 rounded shadow-md w-96">
-        <h2 className="text-xl font-bold mb-4">Make an Investment</h2>
-        
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-6 rounded shadow-md w-full max-w-md"
+      >
+        <h2 className="text-xl font-bold mb-4">💸 Submit a New Investment</h2>
+
         <input
           type="number"
+          placeholder="Enter amount"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Enter amount (INR)"
-          className="mb-4 p-2 border w-full"
+          onChange={(e) => setAmount(Number(e.target.value))}
+          className="mb-4 p-2 border w-full rounded"
           required
         />
+
+        <select
+          value={phase}
+          onChange={(e) => setPhase(e.target.value)}
+          className="mb-4 p-2 border w-full rounded"
+        >
+          <option value="phase1">Phase 1</option>
+          <option value="phase2">Phase 2</option>
+          <option value="phase3">Phase 3</option>
+        </select>
 
         <button
           type="submit"
           className="bg-green-600 text-white p-2 w-full rounded hover:bg-green-700"
-          disabled={!userId}
         >
-          Invest
+          Submit
         </button>
 
-        {message && <p className="mt-4 text-center text-sm">{message}</p>}
+        {message && <p className="mt-4 text-center">{message}</p>}
       </form>
     </div>
   );
