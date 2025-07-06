@@ -3,14 +3,13 @@ import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
 
 export default function Invest() {
-  const [amount, setAmount] = useState<number>(0);
+  const [amount, setAmount] = useState(0);
   const [phase, setPhase] = useState("phase1");
   const [method, setMethod] = useState("upi");
   const [transactionId, setTransactionId] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();
 
-  // 🔒 Redirect if user is not logged in
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) router.push("/auth/login");
@@ -21,27 +20,24 @@ export default function Invest() {
     e.preventDefault();
     setMessage("");
 
-    // ✅ Get user from Supabase
     const {
       data: { user },
-      error: userError,
+      error: ue,
     } = await supabase.auth.getUser();
 
-    if (userError || !user) {
-      return setMessage("❌ Please login to make an investment.");
-    }
-
-    // Validate input
-    const amountToSubmit = parseFloat(amount.toString());
-    if (isNaN(amountToSubmit) || amountToSubmit <= 0) {
-      return setMessage("❌ Please enter a valid investment amount.");
+    if (ue || !user) {
+      return setMessage("❌ Please login first");
     }
 
     if (!transactionId.trim()) {
-      return setMessage("❌ Transaction ID is required.");
+      return setMessage("❌ Transaction ID is required");
     }
 
-    // ✅ Insert into Supabase
+    const amountToSubmit = parseFloat(amount.toString());
+    if (isNaN(amountToSubmit) || amountToSubmit <= 0) {
+      return setMessage("❌ Please enter a valid amount");
+    }
+
     const { error } = await supabase.from("user_investments").insert([
       {
         user_id: user.id,
@@ -50,15 +46,14 @@ export default function Invest() {
         method,
         transaction_id: transactionId.trim(),
         status: "pending",
-        start_date: new Date(),
       },
     ]);
 
     if (error) {
-      console.error("❌ Supabase insert error:", error);
-      setMessage("❌ Failed to submit: " + error.message);
+      console.error("Insert error:", error);
+      setMessage("❌ Failed to submit deposit: " + error.message);
     } else {
-      setMessage("✅ Investment submitted. Awaiting approval.");
+      setMessage("✅ Investment submitted! Awaiting approval.");
       setAmount(0);
       setPhase("phase1");
       setMethod("upi");
@@ -67,34 +62,33 @@ export default function Invest() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded shadow-md w-full max-w-md"
-      >
-        <h2 className="text-xl font-bold mb-4 text-center">
-          💸 Make a New Investment
-        </h2>
-
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Make a New Investment</h1>
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md">
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Amount (INR):</label>
+          <label htmlFor="amount" className="block text-gray-700 text-sm font-bold mb-2">
+            Amount:
+          </label>
           <input
             type="number"
+            id="amount"
             value={amount}
-            onChange={(e) => setAmount(parseFloat(e.target.value))}
-            className="w-full p-2 border rounded"
+            onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+            className="shadow border rounded w-full py-2 px-3"
             required
-            min="1"
-            step="0.01"
           />
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Phase:</label>
+          <label htmlFor="phase" className="block text-gray-700 text-sm font-bold mb-2">
+            Investment Phase:
+          </label>
           <select
+            id="phase"
             value={phase}
             onChange={(e) => setPhase(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="shadow border rounded w-full py-2 px-3"
+            required
           >
             <option value="phase1">Phase 1</option>
             <option value="phase2">Phase 2</option>
@@ -103,46 +97,45 @@ export default function Invest() {
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Payment Method:</label>
+          <label htmlFor="method" className="block text-gray-700 text-sm font-bold mb-2">
+            Payment Method:
+          </label>
           <select
+            id="method"
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="shadow border rounded w-full py-2 px-3"
+            required
           >
             <option value="upi">UPI</option>
             <option value="bank">Bank Transfer</option>
-            <option value="imps">IMPS</option>
-            <option value="card">Card</option>
+            <option value="card">Card Payment</option>
           </select>
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">Transaction ID:</label>
+          <label htmlFor="transactionId" className="block text-gray-700 text-sm font-bold mb-2">
+            Transaction ID:
+          </label>
           <input
             type="text"
+            id="transactionId"
             value={transactionId}
             onChange={(e) => setTransactionId(e.target.value)}
-            className="w-full p-2 border rounded"
-            placeholder="e.g., TXN12345678"
+            className="shadow border rounded w-full py-2 px-3"
             required
           />
         </div>
 
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded w-full"
+          className="bg-green-600 text-white p-2 w-full rounded hover:bg-green-700"
         >
           Submit Investment
         </button>
 
         {message && (
-          <p
-            className={`mt-4 p-2 text-center rounded ${
-              message.startsWith("✅")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
+          <p className={`mt-4 p-2 rounded ${message.startsWith("❌") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
             {message}
           </p>
         )}
