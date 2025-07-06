@@ -8,105 +8,116 @@ interface Investment {
   phase: string;
   method: string;
   status: string;
-  transaction_id: string;
+  transaction_id?: string;
   created_at: string;
 }
 
 export default function Dashboard() {
-  const router = useRouter();
   const [investments, setInvestments] = useState<Investment[]>([]);
-  const [approvedTotal, setApprovedTotal] = useState(0);
-  const [totalProfit, setTotalProfit] = useState(0);
+  const [filter, setFilter] = useState("approved"); // default: approved
+  const [totalApproved, setTotalApproved] = useState(0);
+  const [totalGain, setTotalGain] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) {
-        router.push("/auth/login");
-        return;
-      }
+    const fetchData = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return router.push("/auth/login");
 
-      const { data, error } = await supabase
+      const query = supabase
         .from("user_investments")
         .select("*")
         .eq("user_id", user.id);
 
-      if (error) {
-        console.error("Error fetching investments:", error);
-        return;
+      if (filter !== "all") {
+        query.eq("status", filter);
       }
 
-      setInvestments(data || []);
+      const { data, error } = await query.order("created_at", { ascending: false });
 
-      let approvedTotal = 0;
-      let profit = 0;
+      if (!error && data) {
+        setInvestments(data);
 
-      (data || [])
-        .filter((inv) => inv.status === "approved")
-        .forEach((inv) => {
-          const createdAt = new Date(inv.created_at);
-          const today = new Date();
-          const daysHeld = Math.floor(
-            (today.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
+        // Calculate portfolio and gain for APPROVED only
+        const approved = data.filter((inv) => inv.status === "approved");
+        const total = approved.reduce((sum, inv) => sum + inv.amount, 0);
+        const gains = approved.reduce((sum, inv) => {
+          const days = Math.floor(
+            (new Date().getTime() - new Date(inv.created_at).getTime()) / (1000 * 60 * 60 * 24)
           );
+          const rate =
+            inv.phase === "phase1"
+              ? 1
+              : inv.phase === "phase2"
+              ? 0.6
+              : inv.phase === "phase3"
+              ? 0.3
+              : 0;
+          const gain = (inv.amount * rate * days) / 365;
+          return sum + gain;
+        }, 0);
 
-          let dailyRate = 0;
+        setTotalApproved(total);
+        setTotalGain(Number(gains.toFixed(2)));
+      }
+    };
 
-          if (inv.phase === "phase1") {
-            dailyRate = 1.0 / 365; // 100% / 365
-          } else if (inv.phase === "phase2") {
-            dailyRate = 0.6 / 365; // 60%
-          } else if (inv.phase === "phase3") {
-            dailyRate = 0.3 / 365; // 30%
-          }
-
-          approvedTotal += inv.amount;
-          profit += inv.amount * dailyRate * daysHeld;
-        });
-
-      setApprovedTotal(approvedTotal);
-      setTotalProfit(profit);
-    });
-  }, [router]);
+    fetchData();
+  }, [filter, router]);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">📊 Dashboard</h1>
+    <div className="max-w-3xl mx-auto px-4 py-6">
+      <h1 className="text-2xl font-bold mb-2">📊 Investment Dashboard</h1>
 
       <div className="mb-4">
-        <p className="text-lg">💰 Portfolio Value: ₹{approvedTotal.toFixed(2)}</p>
-        <p className="text-lg text-green-600">
-          📈 Gains: ₹{totalProfit.toFixed(2)} (Auto-calculated daily by phase)
-        </p>
+        <p className="text-lg">💰 Portfolio Value: ₹{totalApproved.toFixed(2)}</p>
+        <p className="text-lg">📈 Gains: ₹{totalGain.toFixed(2)} (Auto-calculated daily by phase)</p>
       </div>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">🧾 All Your Investments</h2>
+      <div className="mb-4">
+        <label htmlFor="filter" className="block text-sm font-semibold text-gray-700 mb-1">
+          Filter by Status:
+        </label>
+        <select
+          id="filter"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border rounded px-3 py-2"
+        >
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+
+      <h2 className="text-xl font-semibold mb-3">🧾 Your Investments</h2>
       {investments.length === 0 ? (
         <p>No investments found.</p>
       ) : (
         <div className="space-y-4">
           {investments.map((inv) => (
-            <div
-              key={inv.id}
-              className="border border-gray-300 rounded p-4 bg-white shadow"
-            >
-              <p className="text-gray-800 font-medium">
+            <div key={inv.id} className="border p-4 rounded shadow-sm bg-white">
+              <p className="font-medium text-lg">
                 ₹{inv.amount} - {inv.phase} via {inv.method}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm">
                 TXN: {inv.transaction_id || "N/A"} | Date:{" "}
-                {new Date(inv.created_at).toLocaleDateString("en-IN")}
+                {new Date(inv.created_at).toLocaleDateString()}
               </p>
-              <span
-                className={`text-xs inline-block mt-1 px-2 py-1 rounded font-bold ${
+              <p
+                className={`text-sm font-bold mt-1 ${
                   inv.status === "approved"
-                    ? "bg-green-100 text-green-700"
+                    ? "text-green-600"
                     : inv.status === "pending"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-red-100 text-red-700"
+                    ? "text-yellow-600"
+                    : "text-red-600"
                 }`}
               >
                 {inv.status.toUpperCase()}
-              </span>
+              </p>
             </div>
           ))}
         </div>
@@ -115,7 +126,7 @@ export default function Dashboard() {
       <div className="mt-6">
         <a
           href="/invest"
-          className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           ➕ Make New Investment
         </a>
