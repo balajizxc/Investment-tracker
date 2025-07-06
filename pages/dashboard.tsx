@@ -49,22 +49,42 @@ export default function Dashboard() {
     })();
   }, [filter, router]);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold">📊 Dashboard</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">📊 Dashboard</h1>
+        <button
+          onClick={handleLogout}
+          className="text-sm text-red-600 hover:underline"
+        >
+          Logout
+        </button>
+      </div>
+
       <div className="my-4">
         <p>💰 Portfolio Value: ₹{total}</p>
         <p className="text-green-600">📈 Gains: ₹{gain} (daily/phase)</p>
       </div>
+
       <div className="mb-4">
         <label className="mr-2">Filter:</label>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="border p-1 rounded">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border p-1 rounded"
+        >
           <option value="approved">Approved</option>
           <option value="pending">Pending</option>
           <option value="rejected">Rejected</option>
           <option value="all">All</option>
         </select>
       </div>
+
       {investments.length === 0 ? (
         <p>No investments found.</p>
       ) : (
@@ -75,18 +95,29 @@ export default function Dashboard() {
               <p className="text-sm">
                 TXN: {inv.transaction_id || "N/A"} | Date: {new Date(inv.created_at).toLocaleDateString()}
               </p>
-              <p className={`${inv.status === "approved" ? "text-green-600" : inv.status === "pending" ? "text-yellow-600" : "text-red-600"} font-semibold`}>
+              <p
+                className={`${
+                  inv.status === "approved"
+                    ? "text-green-600"
+                    : inv.status === "pending"
+                    ? "text-yellow-600"
+                    : "text-red-600"
+                } font-semibold`}
+              >
                 {inv.status.toUpperCase()}
               </p>
             </div>
           ))}
         </div>
       )}
-      <a href="/invest" className="inline-block mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+
+      <a
+        href="/invest"
+        className="inline-block mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
         ➕ Make New Investment
       </a>
 
-      {/* Inline Footer */}
       <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t">
         <p>📞 Need help? Contact support or join our Telegram community.</p>
         <p>
