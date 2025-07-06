@@ -1,9 +1,6 @@
-// pages/dashboard.tsx
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
-import Footer from "../components/Footer";
 
 interface Investment {
   id: string;
@@ -88,7 +85,15 @@ export default function Dashboard() {
       <a href="/invest" className="inline-block mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
         ➕ Make New Investment
       </a>
-      <Footer />
+
+      {/* Inline Footer */}
+      <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t">
+        <p>📞 Need help? Contact support or join our Telegram community.</p>
+        <p>
+          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
+          📧 <a href="mailto:support@finverg.com" className="text-blue-600 underline">support@finverg.com</a>
+        </p>
+      </footer>
     </div>
   );
 }
