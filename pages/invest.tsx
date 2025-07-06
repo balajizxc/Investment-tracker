@@ -6,7 +6,7 @@ export default function Invest() {
   const [amount, setAmount] = useState(0);
   const [phase, setPhase] = useState("phase1");
   const [method, setMethod] = useState("upi");
-  const [transactionId, setTransactionId] = useState("");
+  const [txnId, setTxnId] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();
 
@@ -16,21 +16,17 @@ export default function Invest() {
     });
   }, [router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage("");
 
     const {
       data: { user },
-      error: ue,
+      error: userError,
     } = await supabase.auth.getUser();
 
-    if (ue || !user) {
-      return setMessage("❌ Please login first");
-    }
-
-    if (!transactionId.trim()) {
-      return setMessage("❌ Transaction ID is required");
+    if (userError || !user) {
+      return setMessage("❌ Login to invest");
     }
 
     const amountToSubmit = parseFloat(amount.toString());
@@ -44,20 +40,26 @@ export default function Invest() {
         amount: amountToSubmit,
         phase,
         method,
-        transaction_id: transactionId.trim(),
+        transaction_id: txnId,
         status: "pending",
       },
     ]);
 
     if (error) {
       console.error("Insert error:", error);
-      setMessage("❌ Failed to submit deposit: " + error.message);
+      setMessage("❌ Submission failed: " + error.message);
     } else {
       setMessage("✅ Investment submitted! Awaiting approval.");
+      // Reset form
       setAmount(0);
       setPhase("phase1");
       setMethod("upi");
-      setTransactionId("");
+      setTxnId("");
+
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 3000);
     }
   };
 
@@ -66,28 +68,24 @@ export default function Invest() {
       <h1 className="text-2xl font-bold mb-4">Make a New Investment</h1>
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md">
         <div className="mb-4">
-          <label htmlFor="amount" className="block text-gray-700 text-sm font-bold mb-2">
-            Amount:
-          </label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">Amount:</label>
           <input
             type="number"
-            id="amount"
             value={amount}
             onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-            className="shadow border rounded w-full py-2 px-3"
             required
+            className="border rounded w-full p-2"
+            min="0.01"
+            step="0.01"
           />
         </div>
 
         <div className="mb-4">
-          <label htmlFor="phase" className="block text-gray-700 text-sm font-bold mb-2">
-            Investment Phase:
-          </label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">Investment Phase:</label>
           <select
-            id="phase"
             value={phase}
             onChange={(e) => setPhase(e.target.value)}
-            className="shadow border rounded w-full py-2 px-3"
+            className="border rounded w-full p-2"
             required
           >
             <option value="phase1">Phase 1</option>
@@ -97,14 +95,11 @@ export default function Invest() {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="method" className="block text-gray-700 text-sm font-bold mb-2">
-            Payment Method:
-          </label>
+          <label className="block text-gray-700 text-sm font-bold mb-2">Payment Method:</label>
           <select
-            id="method"
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="shadow border rounded w-full py-2 px-3"
+            className="border rounded w-full p-2"
             required
           >
             <option value="upi">UPI</option>
@@ -113,29 +108,33 @@ export default function Invest() {
           </select>
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="transactionId" className="block text-gray-700 text-sm font-bold mb-2">
-            Transaction ID:
-          </label>
+        <div className="mb-6">
+          <label className="block text-gray-700 text-sm font-bold mb-2">Transaction ID:</label>
           <input
             type="text"
-            id="transactionId"
-            value={transactionId}
-            onChange={(e) => setTransactionId(e.target.value)}
-            className="shadow border rounded w-full py-2 px-3"
+            value={txnId}
+            onChange={(e) => setTxnId(e.target.value)}
+            className="border rounded w-full p-2"
+            placeholder="Enter Transaction ID"
             required
           />
         </div>
 
         <button
           type="submit"
-          className="bg-green-600 text-white p-2 w-full rounded hover:bg-green-700"
+          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
         >
           Submit Investment
         </button>
 
         {message && (
-          <p className={`mt-4 p-2 rounded ${message.startsWith("❌") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+          <p
+            className={`mt-4 p-2 text-center rounded ${
+              message.startsWith("❌")
+                ? "bg-red-100 text-red-700"
+                : "bg-green-100 text-green-700"
+            }`}
+          >
             {message}
           </p>
         )}
