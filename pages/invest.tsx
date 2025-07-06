@@ -1,163 +1,94 @@
-import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+// pages/dashboard.tsx
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
+import Footer from "../components/Footer";
 
-export default function Invest() {
-  const [amount, setAmount] = useState(0);
-  const [phase, setPhase] = useState("phase1");
-  const [method, setMethod] = useState("upi");
-  const [transactionId, setTransactionId] = useState("");
-  const [message, setMessage] = useState("");
+interface Investment {
+  id: string;
+  amount: number;
+  phase: string;
+  method: string;
+  status: string;
+  transaction_id?: string;
+  created_at: string;
+}
+
+export default function Dashboard() {
   const router = useRouter();
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [filter, setFilter] = useState("approved");
+  const [total, setTotal] = useState(0);
+  const [gain, setGain] = useState(0);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push("/auth/login");
-    });
-  }, [router]);
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return router.push("/auth/login");
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setMessage("");
+      let query = supabase.from("user_investments").select("*").eq("user_id", user.id);
+      if (filter !== "all") query = query.eq("status", filter);
 
-    const {
-      data: { user },
-      error: ue,
-    } = await supabase.auth.getUser();
-    if (ue || !user) {
-      return setMessage("❌ Login to invest");
-    }
+      const { data, error } = await query.order("created_at", { ascending: false });
+      if (error) return console.error(error);
 
-    const amountToSubmit = parseFloat(amount.toString());
-    if (isNaN(amountToSubmit) || amountToSubmit <= 0 || transactionId.trim() === "") {
-      return setMessage("❌ Please fill in all required fields.");
-    }
+      setInvestments(data || []);
 
-    const { error } = await supabase.from("user_investments").insert([
-      {
-        user_id: user.id,
-        amount: amountToSubmit,
-        phase,
-        method,
-        transaction_id: transactionId,
-        status: "pending",
-      },
-    ]);
-
-    if (error) {
-      console.error("Supabase insert error:", error);
-      setMessage("❌ Submission failed: " + error.message);
-    } else {
-      setMessage("✅ Investment submitted! Awaiting approval.");
-      setAmount(0);
-      setPhase("phase1");
-      setMethod("upi");
-      setTransactionId("");
-      setTimeout(() => router.push("/dashboard"), 2500);
-    }
-  };
-
-  const renderPaymentDetails = () => {
-    switch (method) {
-      case "upi":
-        return (
-          <div className="bg-gray-100 p-3 rounded mb-4">
-            <p><strong>UPI ID:</strong> balajizxc@kotak</p>
-          </div>
-        );
-      case "bank":
-        return (
-          <div className="bg-gray-100 p-3 rounded mb-4">
-            <p><strong>Account Number:</strong> 8750125837</p>
-            <p><strong>IFSC Code:</strong> KKBK0008763</p>
-            <p><strong>Bank:</strong> Kotak Mahindra Bank</p>
-            <p><strong>Branch:</strong> Pollachi</p>
-          </div>
-        );
-      case "card":
-        return (
-          <div className="bg-yellow-100 p-3 rounded mb-4 text-yellow-800">
-            <p>Card payment instructions will be shared soon.</p>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
+      let tot = 0,
+        g = 0;
+      data?.forEach((inv) => {
+        if (inv.status === "approved") {
+          tot += inv.amount;
+          const days = (Date.now() - new Date(inv.created_at).getTime()) / (1000 * 60 * 60 * 24);
+          const rate = inv.phase === "phase1" ? 1 : inv.phase === "phase2" ? 0.6 : 0.3;
+          g += (inv.amount * rate * days) / 365;
+        }
+      });
+      setTotal(parseFloat(tot.toFixed(2)));
+      setGain(parseFloat(g.toFixed(2)));
+    })();
+  }, [filter, router]);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Make a New Investment</h1>
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md">
-        <div className="mb-4">
-          <label htmlFor="amount" className="block font-medium mb-2">Amount (₹):</label>
-          <input
-            type="number"
-            id="amount"
-            value={amount}
-            onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
+    <div className="max-w-3xl mx-auto p-6">
+      <h1 className="text-2xl font-bold">📊 Dashboard</h1>
+      <div className="my-4">
+        <p>💰 Portfolio Value: ₹{total}</p>
+        <p className="text-green-600">📈 Gains: ₹{gain} (daily/phase)</p>
+      </div>
+      <div className="mb-4">
+        <label className="mr-2">Filter:</label>
+        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="border p-1 rounded">
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+      {investments.length === 0 ? (
+        <p>No investments found.</p>
+      ) : (
+        <div className="space-y-4">
+          {investments.map((inv) => (
+            <div key={inv.id} className="border p-4 rounded bg-white shadow">
+              <p className="font-medium">₹{inv.amount} - {inv.phase} via {inv.method}</p>
+              <p className="text-sm">
+                TXN: {inv.transaction_id || "N/A"} | Date: {new Date(inv.created_at).toLocaleDateString()}
+              </p>
+              <p className={`${inv.status === "approved" ? "text-green-600" : inv.status === "pending" ? "text-yellow-600" : "text-red-600"} font-semibold`}>
+                {inv.status.toUpperCase()}
+              </p>
+            </div>
+          ))}
         </div>
-
-        <div className="mb-4">
-          <label htmlFor="phase" className="block font-medium mb-2">Investment Phase:</label>
-          <select
-            id="phase"
-            value={phase}
-            onChange={(e) => setPhase(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          >
-            <option value="phase1">Phase 1</option>
-            <option value="phase2">Phase 2</option>
-            <option value="phase3">Phase 3</option>
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="method" className="block font-medium mb-2">Payment Method:</label>
-          <select
-            id="method"
-            value={method}
-            onChange={(e) => setMethod(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          >
-            <option value="upi">UPI</option>
-            <option value="bank">Bank Transfer</option>
-            <option value="card">Card Payment</option>
-          </select>
-        </div>
-
-        {renderPaymentDetails()}
-
-        <div className="mb-6">
-          <label htmlFor="transactionId" className="block font-medium mb-2">Transaction ID:</label>
-          <input
-            type="text"
-            id="transactionId"
-            value={transactionId}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setTransactionId(e.target.value)}
-            className="w-full border rounded px-3 py-2"
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
-        >
-          Submit Investment
-        </button>
-
-        {message && (
-          <p className={`mt-4 p-2 rounded text-sm ${message.startsWith("✅") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-            {message}
-          </p>
-        )}
-      </form>
+      )}
+      <a href="/invest" className="inline-block mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        ➕ Make New Investment
+      </a>
+      <Footer />
     </div>
   );
 }
