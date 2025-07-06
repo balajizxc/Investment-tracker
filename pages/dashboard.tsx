@@ -1,107 +1,130 @@
-// pages/auth/register.tsx
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../lib/supabase";
 
-export default function Register() {
+interface Investment {
+  id: string;
+  amount: number;
+  phase: string;
+  method: string;
+  status: string;
+  transaction_id?: string;
+  created_at: string;
+}
+
+export default function Dashboard() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [country, setCountry] = useState("India");
-  const [message, setMessage] = useState("");
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [filter, setFilter] = useState("approved");
+  const [total, setTotal] = useState(0);
+  const [gain, setGain] = useState(0);
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage("");
+  useEffect(() => {
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return router.push("/auth/login");
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+      let query = supabase.from("user_investments").select("*").eq("user_id", user.id);
+      if (filter !== "all") query = query.eq("status", filter);
 
-    if (signUpError || !data.user) {
-      setMessage("❌ Registration failed: " + signUpError?.message);
-      return;
-    }
+      const { data, error } = await query.order("created_at", { ascending: false });
+      if (error) return console.error(error);
 
-    const { error: insertError } = await supabase.from("users").insert([
-      {
-        id: data.user.id,
-        email,
-        name,
-        phone,
-        country,
-      },
-    ]);
+      setInvestments(data || []);
 
-    if (insertError) {
-      setMessage("❌ Error saving user data: " + insertError.message);
-    } else {
-      setMessage("✅ Registered! Redirecting to dashboard...");
-      setTimeout(() => router.push("/dashboard"), 2000);
-    }
+      let tot = 0,
+        g = 0;
+      data?.forEach((inv) => {
+        if (inv.status === "approved") {
+          tot += inv.amount;
+          const days = (Date.now() - new Date(inv.created_at).getTime()) / (1000 * 60 * 60 * 24);
+          const rate = inv.phase === "phase1" ? 1 : inv.phase === "phase2" ? 0.6 : 0.3;
+          g += (inv.amount * rate * days) / 365;
+        }
+      });
+      setTotal(parseFloat(tot.toFixed(2)));
+      setGain(parseFloat(g.toFixed(2)));
+    })();
+  }, [filter, router]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Register</h1>
-      <form onSubmit={handleRegister}>
-        <input
-          type="text"
-          placeholder="Full Name"
-          className="w-full mb-3 p-2 border rounded"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full mb-3 p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <div className="flex mb-3 space-x-2">
-          <select
-            className="w-1/3 p-2 border rounded"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            required
-          >
-            <option value="India">🇮🇳 +91 India</option>
-            <option value="USA">🇺🇸 +1 USA</option>
-            <option value="UK">🇬🇧 +44 UK</option>
-            <option value="Singapore">🇸🇬 +65 Singapore</option>
-            {/* Add more countries as needed */}
-          </select>
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            className="w-2/3 p-2 border rounded"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          />
-        </div>
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full mb-4 p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
-          Register
+    <div className="max-w-3xl mx-auto p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">📊 Dashboard</h1>
+        <button
+          onClick={handleLogout}
+          className="text-sm text-red-600 hover:underline"
+        >
+          Logout
         </button>
-        {message && (
-          <p className="mt-4 text-center text-sm text-red-600">{message}</p>
-        )}
-      </form>
+      </div>
+
+      <div className="my-4">
+        <p>💰 Portfolio Value: ₹{total}</p>
+        <p className="text-green-600">📈 Gains: ₹{gain} (daily/phase)</p>
+      </div>
+
+      <div className="mb-4">
+        <label className="mr-2">Filter:</label>
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border p-1 rounded"
+        >
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+
+      {investments.length === 0 ? (
+        <p>No investments found.</p>
+      ) : (
+        <div className="space-y-4">
+          {investments.map((inv) => (
+            <div key={inv.id} className="border p-4 rounded bg-white shadow">
+              <p className="font-medium">₹{inv.amount} - {inv.phase} via {inv.method}</p>
+              <p className="text-sm">
+                TXN: {inv.transaction_id || "N/A"} | Date: {new Date(inv.created_at).toLocaleDateString()}
+              </p>
+              <p
+                className={`${
+                  inv.status === "approved"
+                    ? "text-green-600"
+                    : inv.status === "pending"
+                    ? "text-yellow-600"
+                    : "text-red-600"
+                } font-semibold`}
+              >
+                {inv.status.toUpperCase()}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <a
+        href="/invest"
+        className="inline-block mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        ➕ Make New Investment
+      </a>
+
+      <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t">
+        <p>📞 Need help? Contact support or join our Telegram community.</p>
+        <p>
+          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
+          📧 <a href="mailto:support@finverg.com" className="text-blue-600 underline">support@finverg.com</a>
+        </p>
+      </footer>
     </div>
   );
 }
