@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid,
 } from "recharts";
 
 interface Investment {
@@ -16,186 +16,96 @@ interface Investment {
   phase: string;
   method: string;
   transaction_id: string;
-  created_at: string;
   status: string;
+  created_at: string;
 }
 
 export default function Dashboard() {
-  const router = useRouter();
   const [investments, setInvestments] = useState<Investment[]>([]);
-  const [filtered, setFiltered] = useState<Investment[]>([]);
-  const [filter, setFilter] = useState("all");
-  const [portfolioValue, setPortfolioValue] = useState(0);
-  const [currentValue, setCurrentValue] = useState(0);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) {
-        router.push("/auth/login");
-      } else {
-        const { data, error } = await supabase
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) router.push("/auth/login");
+      else {
+        supabase
           .from("user_investments")
           .select("*")
-          .eq("user_id", user.id);
-
-        if (!error && data) {
-          setInvestments(data);
-          setFiltered(data);
-          const approved = data.filter((inv) => inv.status === "approved");
-
-          const total = approved.reduce((sum, inv) => sum + Number(inv.amount), 0);
-          setPortfolioValue(total);
-
-          // Calculate current value with interest
-          const valueWithInterest = approved.reduce((sum, inv) => {
-            const interest = getInterestRate(inv.phase);
-            return sum + Number(inv.amount) * (1 + interest / 100);
-          }, 0);
-
-          setCurrentValue(valueWithInterest);
-        }
+          .eq("user_id", user.id)
+          .then(({ data }) => {
+            setInvestments(data || []);
+          });
       }
     });
   }, [router]);
 
-  const handleFilter = (status: string) => {
-    setFilter(status);
-    if (status === "all") {
-      setFiltered(investments);
-    } else {
-      setFiltered(investments.filter((inv) => inv.status === status));
-    }
+  const getFilteredInvestments = () => {
+    return statusFilter === "all"
+      ? investments
+      : investments.filter((inv) => inv.status === statusFilter);
   };
 
-  const getInterestRate = (phase: string) => {
-    switch (phase) {
-      case "phase1": return 10;
-      case "phase2": return 12;
-      case "phase3": return 15;
-      default: return 0;
-    }
+  const approvedInvestments = investments.filter((inv) => inv.status === "approved");
+
+  const totalApproved = approvedInvestments.reduce((sum, inv) => sum + inv.amount, 0);
+
+  const getInterest = (amount: number, phase: string) => {
+    const rate = phase === "phase1" ? 0.1 : phase === "phase2" ? 0.07 : 0.05;
+    return amount * rate;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved": return "bg-green-100 text-green-700";
-      case "pending": return "bg-yellow-100 text-yellow-700";
-      case "rejected": return "bg-red-100 text-red-700";
-      default: return "bg-gray-100 text-gray-700";
-    }
-  };
-
-  const chartData = investments
-    .filter((inv) => inv.status === "approved")
-    .map((inv) => ({
-      name: inv.phase,
-      value: Number(inv.amount),
-    }));
+  const chartData = approvedInvestments.map((inv) => ({
+    date: new Date(inv.created_at).toLocaleDateString("en-GB"),
+    amount: inv.amount,
+  }));
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="p-4 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">📊 Dashboard</h1>
 
-      {/* Summary Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded shadow">
-          <p className="text-lg">💰 Total Investment</p>
-          <p className="font-bold text-xl text-blue-600">₹{portfolioValue.toFixed(2)}</p>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="bg-blue-100 p-4 rounded shadow">
+          💰 <strong>Total Investment:</strong> ₹{totalApproved.toFixed(2)}
         </div>
-        <div className="bg-white p-4 rounded shadow">
-          <p className="text-lg">📈 Current Value (with Interest)</p>
-          <p className="font-bold text-xl text-green-600">₹{currentValue.toFixed(2)}</p>
-        </div>
-        <div className="bg-white p-4 rounded shadow">
-          <p className="text-lg">🧮 Total Returns</p>
-          <p className="font-bold text-xl text-purple-600">
-            ₹{(currentValue - portfolioValue).toFixed(2)}
-          </p>
+        <div className="bg-green-100 p-4 rounded shadow">
+          📈 <strong>Estimated Interest:</strong> ₹
+          {approvedInvestments.reduce((sum, inv) => sum + getInterest(inv.amount, inv.phase), 0).toFixed(2)}
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h2 className="text-lg font-semibold mb-2">📊 Investment by Phase</h2>
-        {chartData.length ? (
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={chartData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <CartesianGrid strokeDasharray="3 3" />
-              <Bar dataKey="value" fill="#3B82F6" />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-gray-500">No approved investments for chart.</p>
-        )}
+      <div className="mb-4">
+        <label className="block text-gray-700 font-medium mb-1">🔎 Filter by Status:</label>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="border rounded px-3 py-2 w-full"
+        >
+          <option value="all">All</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+        </select>
       </div>
 
-      {/* Filter Controls */}
-      <div className="mb-4 space-x-2">
-        {["all", "pending", "approved", "rejected"].map((stat) => (
-          <button
-            key={stat}
-            onClick={() => handleFilter(stat)}
-            className={`px-3 py-1 rounded capitalize ${
-              filter === stat ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
-          >
-            {stat}
-          </button>
+      <div className="grid gap-4">
+        {getFilteredInvestments().map((inv, idx) => (
+          <div key={idx} className="bg-white p-4 rounded shadow border">
+            <div>₹{inv.amount} - {inv.phase} via {inv.method}</div>
+            <div>TXN: {inv.transaction_id || "N/A"}</div>
+            <div>Date: {new Date(inv.created_at).toLocaleDateString("en-GB")}</div>
+            <div className="mt-1 text-sm text-gray-600 font-semibold uppercase tracking-wide">
+              {inv.status}
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* Table View */}
-      <div className="overflow-x-auto bg-white rounded shadow">
-        <table className="w-full text-sm table-auto">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="px-4 py-2">Amount</th>
-              <th className="px-4 py-2">Phase</th>
-              <th className="px-4 py-2">Method</th>
-              <th className="px-4 py-2">Txn ID</th>
-              <th className="px-4 py-2">Date</th>
-              <th className="px-4 py-2">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((inv, idx) => (
-              <tr key={idx} className="border-t">
-                <td className="px-4 py-2">₹{inv.amount}</td>
-                <td className="px-4 py-2">{inv.phase}</td>
-                <td className="px-4 py-2">{inv.method}</td>
-                <td className="px-4 py-2">{inv.transaction_id || "N/A"}</td>
-                <td className="px-4 py-2">
-                  {inv.created_at
-                    ? new Date(inv.created_at).toLocaleDateString("en-IN")
-                    : "N/A"}
-                </td>
-                <td className="px-4 py-2">
-                  <span className={`px-2 py-1 text-xs rounded font-semibold ${getStatusColor(inv.status)}`}>
-                    {inv.status.toUpperCase()}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filtered.length === 0 && (
-          <p className="text-center py-4 text-gray-500">No investments found.</p>
-        )}
-      </div>
-
-      {/* Link to invest */}
-      <div className="mt-6 text-center">
-        <a
-          href="/invest"
-          className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          ➕ Make New Investment
-        </a>
-      </div>
-    </div>
-  );
-}
+      {chartData.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold mb-2">📈 Investment Chart</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <AreaChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis
