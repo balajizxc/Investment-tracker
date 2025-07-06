@@ -54,9 +54,23 @@ export default function Invest() {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
+
   return (
     <div className="max-w-xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Make a New Investment</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Make a New Investment</h1>
+        <button
+          onClick={handleLogout}
+          className="text-sm text-red-600 hover:underline"
+        >
+          Logout
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-1 font-medium">Amount:</label>
@@ -98,7 +112,6 @@ export default function Invest() {
           </select>
         </div>
 
-        {/* ✅ Conditionally show Payment Info */}
         <div className="bg-gray-100 p-4 rounded">
           <h2 className="font-semibold mb-2">💳 Payment Info</h2>
           {method === "upi" && (
@@ -142,6 +155,15 @@ export default function Invest() {
           </p>
         )}
       </form>
+
+      <div className="mt-4">
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="text-blue-600 underline text-sm"
+        >
+          ← Back to Dashboard
+        </button>
+      </div>
 
       <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t">
         <p>📞 Need help? Contact support or join our Telegram community.</p>
