@@ -3,109 +3,71 @@ import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabase";
 
 export default function Register() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  const router = useRouter();
+  const [message, setMessage] = useState("");
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+    setMessage("");
 
-    // Step 1: Register with Supabase Auth
-    const {
-      data: { user, session },
-      error: signUpError,
-    } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
 
-    if (signUpError || !user) {
-      setError(signUpError?.message || "Registration failed");
-      return;
+    if (error) {
+      setMessage("❌ " + error.message);
+    } else {
+      setMessage("✅ Registration successful! Check your email.");
+      setTimeout(() => router.push("/auth/login"), 2500);
     }
-
-    // Step 2: Check if user already exists in your users table
-    const { data: existingUser, error: fetchError } = await supabase
-      .from("users")
-      .select("id")
-      .eq("id", user.id)
-      .single();
-
-    if (!existingUser) {
-      // Step 3: Insert user into users table
-      const { error: insertError } = await supabase.from("users").insert([
-        {
-          id: user.id,
-          email: user.email,
-          name: name,
-        },
-      ]);
-
-      if (insertError) {
-        setError("User created but failed to save profile");
-        return;
-      }
-    }
-
-    // Step 4: Redirect to dashboard
-    alert("✅ Registered successfully. Please check your email to verify.");
-    router.push("/dashboard");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <form
-        onSubmit={handleRegister}
-        className="bg-white p-6 rounded shadow-md w-full max-w-md"
-      >
-        <h2 className="text-xl font-bold mb-4">📝 Register</h2>
-
-        <input
-          type="text"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="mb-2 p-2 border w-full rounded"
-          required
-        />
-
+    <div className="max-w-md mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">Register</h1>
+      <form onSubmit={handleRegister} className="space-y-4">
         <input
           type="email"
           placeholder="Email"
+          className="w-full border p-2 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mb-2 p-2 border w-full rounded"
           required
         />
-
         <input
           type="password"
           placeholder="Password"
+          className="w-full border p-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 p-2 border w-full rounded"
           required
         />
-
-        {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-
         <button
           type="submit"
-          className="bg-green-600 text-white p-2 w-full rounded hover:bg-green-700"
+          className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
         >
           Register
         </button>
-
-        <p className="mt-4 text-sm text-center">
-          Already have an account?{" "}
-          <a href="/auth/login" className="text-blue-600 hover:underline">
-            Login here
-          </a>
+        <p className="text-sm text-gray-600 text-center">
+          Already have an account? <a href="/auth/login" className="text-blue-600 underline">Login</a>
         </p>
+        {message && (
+          <p className={`p-2 rounded ${message.startsWith("✅") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+            {message}
+          </p>
+        )}
       </form>
+
+      <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t">
+        <p>📞 Need help? Contact support or join our Telegram community.</p>
+        <p>
+          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
+          📧 <a href="mailto:support@finverg.com" className="text-blue-600 underline">support@finverg.com</a>
+        </p>
+      </footer>
     </div>
   );
 }
