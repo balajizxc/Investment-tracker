@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
 
 export default function Invest() {
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState<number | "">("");
   const [phase, setPhase] = useState("phase1");
   const [method, setMethod] = useState("upi");
-  const [txnId, setTxnId] = useState("");
+  const [transactionId, setTransactionId] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();
 
@@ -16,21 +16,18 @@ export default function Invest() {
     });
   }, [router]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
 
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return setMessage("❌ Login to invest");
-    }
+    if (!user) return setMessage("❌ Login required");
 
-    if (!amount || amount <= 0) {
-      return setMessage("❌ Please enter a valid amount");
+    if (!amount || amount <= 0 || transactionId.trim() === "") {
+      return setMessage("❌ Please fill all fields properly.");
     }
 
     const { error } = await supabase.from("user_investments").insert([
@@ -39,18 +36,21 @@ export default function Invest() {
         amount,
         phase,
         method,
-        transaction_id: txnId,
+        transaction_id: transactionId,
         status: "pending",
       },
     ]);
 
     if (error) {
       console.error(error);
-      setMessage("❌ Submission failed");
+      setMessage("❌ " + error.message);
     } else {
       setMessage("✅ Investment submitted! Awaiting approval.");
-      setAmount(0);
-      setTxnId("");
+      setAmount("");
+      setPhase("phase1");
+      setMethod("upi");
+      setTransactionId("");
+      setTimeout(() => router.push("/dashboard"), 2000);
     }
   };
 
@@ -59,19 +59,25 @@ export default function Invest() {
       <h1 className="text-2xl font-bold mb-4">Make a New Investment</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label>Amount:</label>
+          <label className="block mb-1 font-medium">Amount:</label>
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(parseFloat(e.target.value))}
             className="w-full border p-2 rounded"
             required
+            min="1"
           />
         </div>
 
         <div>
-          <label>Investment Phase:</label>
-          <select value={phase} onChange={(e) => setPhase(e.target.value)} className="w-full border p-2 rounded">
+          <label className="block mb-1 font-medium">Investment Phase:</label>
+          <select
+            value={phase}
+            onChange={(e) => setPhase(e.target.value)}
+            className="w-full border p-2 rounded"
+            required
+          >
             <option value="phase1">Phase 1</option>
             <option value="phase2">Phase 2</option>
             <option value="phase3">Phase 3</option>
@@ -79,39 +85,59 @@ export default function Invest() {
         </div>
 
         <div>
-          <label>Payment Method:</label>
-          <select value={method} onChange={(e) => setMethod(e.target.value)} className="w-full border p-2 rounded">
+          <label className="block mb-1 font-medium">Payment Method:</label>
+          <select
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            className="w-full border p-2 rounded"
+            required
+          >
             <option value="upi">UPI</option>
             <option value="bank">Bank Transfer</option>
-            <option value="imps">IMPS</option>
+            <option value="card">Card Payment</option>
           </select>
         </div>
 
-        <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded border">
-          <p className="font-semibold">💳 Payment Info</p>
-          <p>UPI ID: <strong>balajizxc@kotak</strong></p>
-          <p>Account No: <strong>8750125837</strong></p>
-          <p>IFSC: <strong>KKBK0008763</strong></p>
-          <p>Bank: Kotak Mahindra, Branch: Pollachi</p>
+        {/* ✅ Conditionally show Payment Info */}
+        <div className="bg-gray-100 p-4 rounded">
+          <h2 className="font-semibold mb-2">💳 Payment Info</h2>
+          {method === "upi" && (
+            <p className="text-sm">
+              <strong>UPI ID:</strong> balajizxc@kotak
+            </p>
+          )}
+          {method === "bank" && (
+            <>
+              <p className="text-sm"><strong>Account No:</strong> 8750125837</p>
+              <p className="text-sm"><strong>IFSC:</strong> KKBK0008763</p>
+              <p className="text-sm"><strong>Bank:</strong> Kotak Mahindra, Branch: Pollachi</p>
+            </>
+          )}
+          {method === "card" && (
+            <p className="text-sm text-red-500">Card Payment is currently not supported.</p>
+          )}
         </div>
 
         <div>
-          <label>Transaction ID:</label>
+          <label className="block mb-1 font-medium">Transaction ID:</label>
           <input
             type="text"
-            value={txnId}
-            onChange={(e) => setTxnId(e.target.value)}
+            value={transactionId}
+            onChange={(e) => setTransactionId(e.target.value)}
             className="w-full border p-2 rounded"
             required
           />
         </div>
 
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+        >
           Submit Investment
         </button>
 
         {message && (
-          <p className={`p-2 mt-2 rounded ${message.startsWith("✅") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+          <p className={`p-2 rounded ${message.startsWith("✅") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
             {message}
           </p>
         )}
