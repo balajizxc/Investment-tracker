@@ -1,6 +1,13 @@
 {
-  "name": "Node.js & React",
+  "name": "investment-tracker",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
-  "features": {},
-  "postCreateCommand": "npm install"
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
 }
