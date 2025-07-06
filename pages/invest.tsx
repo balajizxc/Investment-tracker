@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
 
@@ -6,7 +6,7 @@ export default function Invest() {
   const [amount, setAmount] = useState(0);
   const [phase, setPhase] = useState("phase1");
   const [method, setMethod] = useState("upi");
-  const [txnId, setTxnId] = useState("");
+  const [transactionId, setTransactionId] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();
 
@@ -16,22 +16,21 @@ export default function Invest() {
     });
   }, [router]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setMessage("");
 
     const {
       data: { user },
-      error: userError,
+      error: ue,
     } = await supabase.auth.getUser();
-
-    if (userError || !user) {
+    if (ue || !user) {
       return setMessage("❌ Login to invest");
     }
 
     const amountToSubmit = parseFloat(amount.toString());
-    if (isNaN(amountToSubmit) || amountToSubmit <= 0) {
-      return setMessage("❌ Please enter a valid amount");
+    if (isNaN(amountToSubmit) || amountToSubmit <= 0 || transactionId.trim() === "") {
+      return setMessage("❌ Please fill in all required fields.");
     }
 
     const { error } = await supabase.from("user_investments").insert([
@@ -40,26 +39,49 @@ export default function Invest() {
         amount: amountToSubmit,
         phase,
         method,
-        transaction_id: txnId,
+        transaction_id: transactionId,
         status: "pending",
       },
     ]);
 
     if (error) {
-      console.error("Insert error:", error);
+      console.error("Supabase insert error:", error);
       setMessage("❌ Submission failed: " + error.message);
     } else {
       setMessage("✅ Investment submitted! Awaiting approval.");
-      // Reset form
       setAmount(0);
       setPhase("phase1");
       setMethod("upi");
-      setTxnId("");
+      setTransactionId("");
+      setTimeout(() => router.push("/dashboard"), 2500);
+    }
+  };
 
-      // Redirect after 3 seconds
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 3000);
+  const renderPaymentDetails = () => {
+    switch (method) {
+      case "upi":
+        return (
+          <div className="bg-gray-100 p-3 rounded mb-4">
+            <p><strong>UPI ID:</strong> balajizxc@kotak</p>
+          </div>
+        );
+      case "bank":
+        return (
+          <div className="bg-gray-100 p-3 rounded mb-4">
+            <p><strong>Account Number:</strong> 8750125837</p>
+            <p><strong>IFSC Code:</strong> KKBK0008763</p>
+            <p><strong>Bank:</strong> Kotak Mahindra Bank</p>
+            <p><strong>Branch:</strong> Pollachi</p>
+          </div>
+        );
+      case "card":
+        return (
+          <div className="bg-yellow-100 p-3 rounded mb-4 text-yellow-800">
+            <p>Card payment instructions will be shared soon.</p>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
@@ -68,24 +90,24 @@ export default function Invest() {
       <h1 className="text-2xl font-bold mb-4">Make a New Investment</h1>
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md">
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Amount:</label>
+          <label htmlFor="amount" className="block font-medium mb-2">Amount (₹):</label>
           <input
             type="number"
+            id="amount"
             value={amount}
             onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+            className="w-full border rounded px-3 py-2"
             required
-            className="border rounded w-full p-2"
-            min="0.01"
-            step="0.01"
           />
         </div>
 
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Investment Phase:</label>
+          <label htmlFor="phase" className="block font-medium mb-2">Investment Phase:</label>
           <select
+            id="phase"
             value={phase}
             onChange={(e) => setPhase(e.target.value)}
-            className="border rounded w-full p-2"
+            className="w-full border rounded px-3 py-2"
             required
           >
             <option value="phase1">Phase 1</option>
@@ -95,11 +117,12 @@ export default function Invest() {
         </div>
 
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Payment Method:</label>
+          <label htmlFor="method" className="block font-medium mb-2">Payment Method:</label>
           <select
+            id="method"
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="border rounded w-full p-2"
+            className="w-full border rounded px-3 py-2"
             required
           >
             <option value="upi">UPI</option>
@@ -108,33 +131,29 @@ export default function Invest() {
           </select>
         </div>
 
+        {renderPaymentDetails()}
+
         <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Transaction ID:</label>
+          <label htmlFor="transactionId" className="block font-medium mb-2">Transaction ID:</label>
           <input
             type="text"
-            value={txnId}
-            onChange={(e) => setTxnId(e.target.value)}
-            className="border rounded w-full p-2"
-            placeholder="Enter Transaction ID"
+            id="transactionId"
+            value={transactionId}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setTransactionId(e.target.value)}
+            className="w-full border rounded px-3 py-2"
             required
           />
         </div>
 
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
         >
           Submit Investment
         </button>
 
         {message && (
-          <p
-            className={`mt-4 p-2 text-center rounded ${
-              message.startsWith("❌")
-                ? "bg-red-100 text-red-700"
-                : "bg-green-100 text-green-700"
-            }`}
-          >
+          <p className={`mt-4 p-2 rounded text-sm ${message.startsWith("✅") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
             {message}
           </p>
         )}
