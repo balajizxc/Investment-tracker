@@ -1,10 +1,6 @@
 {
-  "name": "Node.js 20",
+  "name": "Node.js & React",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
-  "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "20"
-    }
-  },
+  "features": {},
   "postCreateCommand": "npm install"
 }
