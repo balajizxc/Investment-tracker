@@ -47,7 +47,7 @@ export default function Register() {
         />
         <input
           type="tel"
-          placeholder="Phone Number (optional)"
+          placeholder="Phone Number"
           className="w-full border p-2 rounded"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
