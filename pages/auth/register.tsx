@@ -22,7 +22,7 @@ export default function Register() {
     if (error) {
       setMessage("❌ " + error.message);
     } else {
-      setMessage("✅ Confirmation email sent. Please verify your email.");
+      setMessage("✅ Registration successful! Check your email to confirm.");
       setTimeout(() => router.push("/auth/login"), 3000);
     }
   };
@@ -39,7 +39,6 @@ export default function Register() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-
         <input
           type="password"
           placeholder="Password"
@@ -48,45 +47,30 @@ export default function Register() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+          className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700"
         >
           Register
         </button>
-
-        {message && (
-          <p
-            className={`text-sm text-center ${
-              message.startsWith("✅") ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {message}
-          </p>
-        )}
       </form>
-
-      <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t">
-        <p>📞 Need help? Contact support or join our Telegram community.</p>
-        <p>
-          💬{" "}
-          <a
-            href="https://t.me/finverg"
-            target="_blank"
-            className="text-blue-600 underline"
-          >
-            Join Telegram
-          </a>{" "}
-          | 📧{" "}
-          <a
-            href="mailto:support@finverg.com"
-            className="text-blue-600 underline"
-          >
-            support@finverg.com
-          </a>
+      {message && (
+        <p
+          className={`mt-4 text-sm text-center ${
+            message.startsWith("✅")
+              ? "text-green-600"
+              : "text-red-600"
+          }`}
+        >
+          {message}
         </p>
-      </footer>
+      )}
+      <p className="text-sm text-center mt-4">
+        Already have an account?{" "}
+        <a href="/auth/login" className="text-blue-600 underline">
+          Login
+        </a>
+      </p>
     </div>
   );
 }
