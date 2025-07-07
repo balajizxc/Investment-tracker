@@ -18,23 +18,23 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-green-100 flex flex-col items-center justify-center text-center p-6">
+    <div className="min-h-screen w-full bg-gradient-to-r from-blue-900 via-purple-800 to-indigo-900 text-white flex flex-col items-center justify-center p-6">
       <motion.h1
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4"
+        className="text-4xl md:text-5xl font-extrabold mb-4 text-center"
       >
-        Welcome to <span className="text-blue-600">Finverg</span>
+        Welcome to <span className="text-yellow-300">Finverg</span>
       </motion.h1>
 
       <motion.p
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.8 }}
-        className="text-lg md:text-xl text-gray-700 mb-8 max-w-xl"
+        className="text-lg md:text-xl text-gray-200 mb-8 max-w-xl text-center"
       >
-        Securely invest, track returns by phase, and grow smarter. Powered by Finverg 💸 — your investment partner for long-term wealth.
+        Securely invest, track returns by phase, and grow smarter 💸
       </motion.p>
 
       <motion.div
@@ -45,23 +45,36 @@ export default function Home() {
       >
         <Link
           href="/auth/login"
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition"
+          className="inline-block bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-6 py-3 rounded-lg shadow-md transition"
         >
           Login
         </Link>
         <Link
           href="/auth/register"
-          className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition"
+          className="inline-block bg-white hover:bg-gray-200 text-black font-semibold px-6 py-3 rounded-lg shadow-md transition"
         >
           Register
         </Link>
       </motion.div>
 
-      <footer className="mt-16 py-4 text-sm text-gray-600 border-t w-full text-center">
+      <footer className="mt-16 py-4 text-sm text-gray-300 border-t border-gray-500 w-full text-center">
         <p>📞 Need help? Contact support or join our Telegram community.</p>
         <p>
-          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
-          📧 <a href="mailto:support@finverg.com" className="text-blue-600 underline">support@finverg.com</a>
+          💬{" "}
+          <a
+            href="https://t.me/finverg"
+            target="_blank"
+            className="text-yellow-300 underline"
+          >
+            Join Telegram
+          </a>{" "}
+          | 📧{" "}
+          <a
+            href="mailto:support@finverg.com"
+            className="text-yellow-300 underline"
+          >
+            support@finverg.com
+          </a>
         </p>
       </footer>
     </div>
