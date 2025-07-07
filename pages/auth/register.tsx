@@ -15,9 +15,17 @@ export default function Register() {
     e.preventDefault();
     setMessage("");
 
+    // Register user
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          name,
+          phone,
+          country,
+        },
+      },
     });
 
     if (signUpError || !data.user) {
@@ -25,12 +33,7 @@ export default function Register() {
       return;
     }
 
-    // ✅ Save to metadata (auth.users)
-    await supabase.auth.updateUser({
-      data: { phone, country, name },
-    });
-
-    // ✅ Save to custom `users` table
+    // Save user data to your "users" table
     const { error: insertError } = await supabase.from("users").insert([
       {
         id: data.user.id,
@@ -42,21 +45,21 @@ export default function Register() {
     ]);
 
     if (insertError) {
-      setMessage("❌ Error saving user data: " + insertError.message);
+      setMessage("⚠️ Registered but failed to save details: " + insertError.message);
     } else {
-      setMessage("✅ Registered! Redirecting to dashboard...");
-      setTimeout(() => router.push("/dashboard"), 2000);
+      setMessage("✅ Registered! Check your email for verification.");
+      setTimeout(() => router.push("/auth/login"), 3000);
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
       <h1 className="text-2xl font-bold mb-4">Register</h1>
-      <form onSubmit={handleRegister}>
+      <form onSubmit={handleRegister} className="space-y-4">
         <input
           type="text"
           placeholder="Full Name"
-          className="w-full mb-3 p-2 border rounded"
+          className="w-full border p-2 rounded"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -64,17 +67,16 @@ export default function Register() {
         <input
           type="email"
           placeholder="Email"
-          className="w-full mb-3 p-2 border rounded"
+          className="w-full border p-2 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <div className="flex mb-3 space-x-2">
+        <div className="flex space-x-2">
           <select
             className="w-1/3 p-2 border rounded"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            required
           >
             <option value="India">🇮🇳 +91 India</option>
             <option value="USA">🇺🇸 +1 USA</option>
@@ -93,7 +95,7 @@ export default function Register() {
         <input
           type="password"
           placeholder="Password"
-          className="w-full mb-4 p-2 border rounded"
+          className="w-full border p-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -102,7 +104,15 @@ export default function Register() {
           Register
         </button>
         {message && (
-          <p className="mt-4 text-center text-sm text-red-600">{message}</p>
+          <p
+            className={`text-sm p-2 rounded ${
+              message.startsWith("✅")
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {message}
+          </p>
         )}
       </form>
 
