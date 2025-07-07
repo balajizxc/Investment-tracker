@@ -1,3 +1,4 @@
+// pages/index.tsx
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
@@ -7,32 +8,46 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.push("/dashboard");
-    };
-    checkSession();
-  }, [router]);
+    });
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 bg-gradient-to-br from-blue-50 to-white">
-      <h1 className="text-4xl font-extrabold mb-4 text-blue-800">Welcome to Finverg</h1>
-      <p className="mb-6 text-gray-700 max-w-xl text-center">
-        Securely invest, track returns by phase, and grow smarter. Powered by Finverg 💸 — a simple investment tracker built for long-term wealth management.
-      </p>
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 flex flex-col">
+      <header className="bg-white shadow-sm w-full py-4 px-6 flex justify-between items-center">
+        <h1 className="text-xl font-semibold text-gray-800">💸 Finverg</h1>
+        <div className="space-x-4">
+          <Link href="/auth/login" className="text-blue-600 font-medium hover:underline">
+            Login
+          </Link>
+          <Link href="/auth/register" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Register
+          </Link>
+        </div>
+      </header>
 
-      <div className="space-x-4 mb-6">
-        <Link href="/auth/login" className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700">
-          Login
-        </Link>
-        <Link href="/auth/register" className="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700">
-          Register
-        </Link>
-      </div>
+      <main className="flex-1 flex flex-col items-center justify-center text-center px-4 py-12">
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-800">Welcome to Finverg</h2>
+        <p className="text-lg md:text-xl text-gray-600 max-w-xl mb-8">
+          Securely invest, track returns by phase, and grow smarter. Finverg is your companion in long-term wealth building.
+        </p>
+        <ul className="text-gray-700 space-y-2 mb-8 text-sm md:text-base">
+          <li>✅ Transparent, secure investment tracking</li>
+          <li>📈 Auto-calculated daily gains based on phase returns</li>
+          <li>🔒 Your data is safe and encrypted</li>
+        </ul>
+        <div className="space-x-4">
+          <Link href="/auth/login" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+            Login
+          </Link>
+          <Link href="/auth/register" className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+            Get Started
+          </Link>
+        </div>
+      </main>
 
-      <div className="text-sm text-gray-500 mb-2">🔒 All transactions are securely stored and transparent.</div>
-
-      <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t w-full">
+      <footer className="mt-auto py-6 border-t text-center text-sm text-gray-600 px-4">
         <p>📞 Need help? Contact support or join our Telegram community.</p>
         <p>
           💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
