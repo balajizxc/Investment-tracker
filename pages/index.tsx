@@ -1,87 +1,68 @@
-// pages/index.tsx
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import { motion } from "framer-motion";
+import { supabase } from "../lib/supabase";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Optional: Auto-redirect if already logged in
-    // supabase.auth.getSession().then(({ data: { session } }) => {
-    //   if (session) router.push("/dashboard");
-    // });
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) router.push("/dashboard");
+    };
+    checkSession();
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-r from-blue-900 via-indigo-800 to-purple-800 text-white">
-      <main className="flex flex-col items-center justify-center flex-grow px-6 py-20 text-center">
-        <motion.h1
-          initial={{ opacity: 0, y: -40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-5xl font-extrabold mb-4"
-        >
-          Welcome to Finverg 💸
-        </motion.h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-green-100 flex flex-col items-center justify-center text-center p-6">
+      <motion.h1
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4"
+      >
+        Welcome to <span className="text-blue-600">Finverg</span>
+      </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="text-lg max-w-2xl mb-8 text-gray-200"
-        >
-          Securely invest, track returns by phase, and grow smarter. Powered by Finverg —
-          your simple and transparent investment platform for long-term wealth.
-        </motion.p>
+      <motion.p
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.8 }}
+        className="text-lg md:text-xl text-gray-700 mb-8 max-w-xl"
+      >
+        Securely invest, track returns by phase, and grow smarter. Powered by Finverg 💸 — your investment partner for long-term wealth.
+      </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="flex gap-6"
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
+        className="space-x-4"
+      >
+        <Link
+          href="/auth/login"
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition"
         >
-          <Link
-            href="/auth/login"
-            className="bg-white text-blue-700 px-6 py-3 rounded-lg shadow-md font-semibold hover:bg-blue-100 transition"
-          >
-            Login
-          </Link>
-          <Link
-            href="/auth/register"
-            className="bg-green-400 text-white px-6 py-3 rounded-lg shadow-md font-semibold hover:bg-green-500 transition"
-          >
-            Register
-          </Link>
-        </motion.div>
-      </main>
+          Login
+        </Link>
+        <Link
+          href="/auth/register"
+          className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition"
+        >
+          Register
+        </Link>
+      </motion.div>
 
-      <footer className="py-6 text-center border-t border-white/20 text-sm">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
-        >
-          <p>📞 Need help? Contact support or join our Telegram community.</p>
-          <p className="mt-2">
-            💬{" "}
-            <a
-              href="https://t.me/finverg"
-              target="_blank"
-              className="underline text-blue-300"
-            >
-              Join Telegram
-            </a>{" "}
-            | 📧{" "}
-            <a
-              href="mailto:support@finverg.com"
-              className="underline text-blue-300"
-            >
-              support@finverg.com
-            </a>
-          </p>
-        </motion.div>
+      <footer className="mt-16 py-4 text-sm text-gray-600 border-t w-full text-center">
+        <p>📞 Need help? Contact support or join our Telegram community.</p>
+        <p>
+          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
+          📧 <a href="mailto:support@finverg.com" className="text-blue-600 underline">support@finverg.com</a>
+        </p>
       </footer>
     </div>
   );
