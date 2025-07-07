@@ -1,8 +1,8 @@
-// pages/index.tsx
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const router = useRouter();
@@ -14,44 +14,64 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 flex flex-col">
-      <header className="bg-white shadow-sm w-full py-4 px-6 flex justify-between items-center">
-        <h1 className="text-xl font-semibold text-gray-800">💸 Finverg</h1>
-        <div className="space-x-4">
-          <Link href="/auth/login" className="text-blue-600 font-medium hover:underline">
+    <div
+      className="min-h-screen bg-cover bg-center text-white flex flex-col"
+      style={{
+        backgroundImage:
+          "url('https://images.unsplash.com/photo-1581091012184-7abcb89e90cd?auto=format&fit=crop&w=1400&q=80')",
+      }}
+    >
+      <div className="bg-black bg-opacity-60 flex-1 flex flex-col items-center justify-center px-6">
+        <motion.h1
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-4xl md:text-5xl font-bold mb-4 text-center"
+        >
+          Welcome to <span className="text-green-400">Finverg</span>
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+          className="text-lg md:text-xl text-center max-w-2xl mb-6"
+        >
+          Securely invest, track returns by phase, and grow smarter. Built for long-term wealth management 💸
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="flex space-x-4 mb-10"
+        >
+          <Link
+            href="/auth/login"
+            className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded text-white font-semibold"
+          >
             Login
           </Link>
-          <Link href="/auth/register" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          <Link
+            href="/auth/register"
+            className="bg-green-600 hover:bg-green-700 transition px-6 py-3 rounded text-white font-semibold"
+          >
             Register
           </Link>
-        </div>
-      </header>
+        </motion.div>
 
-      <main className="flex-1 flex flex-col items-center justify-center text-center px-4 py-12">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-800">Welcome to Finverg</h2>
-        <p className="text-lg md:text-xl text-gray-600 max-w-xl mb-8">
-          Securely invest, track returns by phase, and grow smarter. Finverg is your companion in long-term wealth building.
-        </p>
-        <ul className="text-gray-700 space-y-2 mb-8 text-sm md:text-base">
-          <li>✅ Transparent, secure investment tracking</li>
-          <li>📈 Auto-calculated daily gains based on phase returns</li>
-          <li>🔒 Your data is safe and encrypted</li>
+        <ul className="text-sm text-gray-200 space-y-2 text-center">
+          <li>✅ Transparent and secure investment tracking</li>
+          <li>📈 Auto-calculated daily gains</li>
+          <li>🔒 Your data stays private</li>
         </ul>
-        <div className="space-x-4">
-          <Link href="/auth/login" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-            Login
-          </Link>
-          <Link href="/auth/register" className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-            Get Started
-          </Link>
-        </div>
-      </main>
+      </div>
 
-      <footer className="mt-auto py-6 border-t text-center text-sm text-gray-600 px-4">
+      <footer className="bg-black bg-opacity-70 py-4 text-center text-sm text-gray-300 border-t border-gray-700">
         <p>📞 Need help? Contact support or join our Telegram community.</p>
         <p>
-          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
-          📧 <a href="mailto:support@finverg.com" className="text-blue-600 underline">support@finverg.com</a>
+          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-400 underline">Join Telegram</a> | 
+          📧 <a href="mailto:support@finverg.com" className="text-blue-400 underline">support@finverg.com</a>
         </p>
       </footer>
     </div>
