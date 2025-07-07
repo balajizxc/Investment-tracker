@@ -1,3 +1,4 @@
+// pages/auth/register.tsx
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabase";
@@ -5,8 +6,8 @@ import { supabase } from "../../lib/supabase";
 export default function Register() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("India");
   const [message, setMessage] = useState("");
@@ -15,40 +16,21 @@ export default function Register() {
     e.preventDefault();
     setMessage("");
 
-    // Register user
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          name,
-          phone,
-          country,
-        },
-      },
     });
 
-    if (signUpError || !data.user) {
-      setMessage("❌ Registration failed: " + signUpError?.message);
-      return;
-    }
-
-    // Save user data to your "users" table
-    const { error: insertError } = await supabase.from("users").insert([
-      {
-        id: data.user.id,
-        email,
-        name,
-        phone,
-        country,
-      },
-    ]);
-
-    if (insertError) {
-      setMessage("⚠️ Registered but failed to save details: " + insertError.message);
+    if (error) {
+      setMessage("❌ Registration failed: " + error.message);
     } else {
-      setMessage("✅ Registered! Check your email for verification.");
-      setTimeout(() => router.push("/auth/login"), 3000);
+      // Save extra data to localStorage for now
+      localStorage.setItem("pending_name", name);
+      localStorage.setItem("pending_phone", phone);
+      localStorage.setItem("pending_country", country);
+
+      setMessage("✅ Please check your email to verify and login.");
+      setTimeout(() => router.push("/auth/login"), 2500);
     }
   };
 
@@ -59,8 +41,8 @@ export default function Register() {
         <input
           type="text"
           placeholder="Full Name"
-          className="w-full border p-2 rounded"
           value={name}
+          className="w-full border p-2 rounded"
           onChange={(e) => setName(e.target.value)}
           required
         />
@@ -74,9 +56,9 @@ export default function Register() {
         />
         <div className="flex space-x-2">
           <select
-            className="w-1/3 p-2 border rounded"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
+            className="w-1/3 p-2 border rounded"
           >
             <option value="India">🇮🇳 +91 India</option>
             <option value="USA">🇺🇸 +1 USA</option>
@@ -100,29 +82,14 @@ export default function Register() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+
+        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
           Register
         </button>
         {message && (
-          <p
-            className={`text-sm p-2 rounded ${
-              message.startsWith("✅")
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {message}
-          </p>
+          <p className="mt-4 text-sm text-center text-gray-700">{message}</p>
         )}
       </form>
-
-      <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t">
-        <p>📞 Need help? Contact support or join our Telegram community.</p>
-        <p>
-          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
-          📧 <a href="mailto:support@finverg.com" className="text-blue-600 underline">support@finverg.com</a>
-        </p>
-      </footer>
     </div>
   );
 }
