@@ -8,22 +8,28 @@ export default function Register() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          phone,
+        },
+      },
     });
 
     if (error) {
       setMessage("❌ " + error.message);
     } else {
-      setMessage("✅ Registration successful! Check your email to confirm.");
-      setTimeout(() => router.push("/auth/login"), 3000);
+      setMessage("✅ Registration successful! Check your email.");
+      setTimeout(() => router.push("/auth/login"), 2500);
     }
   };
 
@@ -40,6 +46,13 @@ export default function Register() {
           required
         />
         <input
+          type="tel"
+          placeholder="Phone Number (optional)"
+          className="w-full border p-2 rounded"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+        <input
           type="password"
           placeholder="Password"
           className="w-full border p-2 rounded"
@@ -47,30 +60,20 @@ export default function Register() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+
         <button
           type="submit"
-          className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700"
+          className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
         >
           Register
         </button>
+
+        {message && (
+          <p className={`p-2 text-center ${message.startsWith("✅") ? "text-green-700" : "text-red-700"}`}>
+            {message}
+          </p>
+        )}
       </form>
-      {message && (
-        <p
-          className={`mt-4 text-sm text-center ${
-            message.startsWith("✅")
-              ? "text-green-600"
-              : "text-red-600"
-          }`}
-        >
-          {message}
-        </p>
-      )}
-      <p className="text-sm text-center mt-4">
-        Already have an account?{" "}
-        <a href="/auth/login" className="text-blue-600 underline">
-          Login
-        </a>
-      </p>
     </div>
   );
 }
