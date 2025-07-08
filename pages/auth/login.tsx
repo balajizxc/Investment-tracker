@@ -1,16 +1,18 @@
+// pages/auth/login.tsx
+
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { supabase } from "../../lib/supabase";
-import Link from "next/link";
 
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage("");
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -18,22 +20,21 @@ export default function Login() {
     });
 
     if (error) {
-      setError(error.message);
+      setMessage("❌ " + error.message);
     } else {
-      router.push("/dashboard");
+      setMessage("✅ Login successful! Redirecting...");
+      setTimeout(() => router.push("/dashboard"), 2000);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-100 p-6">
-      <h1 className="text-4xl font-bold mb-4">Login to Finverg</h1>
-      <p className="mb-6 text-lg text-gray-600">Access your secure investment dashboard</p>
-
-      <form onSubmit={handleLogin} className="flex flex-col gap-4 w-full max-w-sm">
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
+      <h1 className="text-2xl font-bold mb-4">Login</h1>
+      <form onSubmit={handleLogin} className="space-y-4">
         <input
           type="email"
           placeholder="Email"
-          className="p-2 border rounded-md"
+          className="w-full border p-2 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -41,27 +42,34 @@ export default function Login() {
         <input
           type="password"
           placeholder="Password"
-          className="p-2 border rounded-md"
+          className="w-full border p-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-
         <button
           type="submit"
-          className="bg-black text-white p-2 rounded-md hover:bg-gray-800"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
         >
           Login
         </button>
       </form>
-
-      <p className="mt-4 text-sm text-gray-500">
-        Don&apos;t have an account?{" "}
-        <Link href="/auth/register" className="text-blue-500 underline">
+      {message && (
+        <p
+          className={`mt-4 text-sm text-center ${
+            message.startsWith("✅")
+              ? "text-green-600"
+              : "text-red-600"
+          }`}
+        >
+          {message}
+        </p>
+      )}
+      <p className="text-sm text-center mt-4">
+        Don't have an account?{" "}
+        <a href="/auth/register" className="text-blue-600 underline">
           Register
-        </Link>
+        </a>
       </p>
     </div>
   );
