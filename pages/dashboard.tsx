@@ -34,8 +34,7 @@ export default function Dashboard() {
 
       setInvestments(data || []);
 
-      let tot = 0,
-        g = 0;
+      let tot = 0, g = 0;
       data?.forEach((inv) => {
         if (inv.status === "approved") {
           tot += inv.amount;
@@ -59,12 +58,20 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">📊 Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-red-600 hover:underline"
-        >
-          Logout
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+          >
+            Logout
+          </button>
+          <button
+            onClick={() => router.push("/arbitrage")}
+            className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700"
+          >
+            Arbitrage
+          </button>
+        </div>
       </div>
 
       {/* Summary */}
@@ -118,19 +125,13 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Action Buttons */}
+      {/* Bottom Buttons */}
       <div className="flex flex-wrap gap-4 mt-6">
         <a
           href="/invest"
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           ➕ Make New Investment
-        </a>
-        <a
-          href="/arbitrage"
-          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-        >
-          🔁 Arbitrage
         </a>
         <button
           onClick={() => alert("Coming soon...")}
