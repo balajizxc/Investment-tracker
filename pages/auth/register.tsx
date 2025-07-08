@@ -1,79 +1,24 @@
-// pages/auth/register.tsx
-
-import { useState } from "react";
-import { useRouter } from "next/router";
-import { supabase } from "../../lib/supabase";
+import Link from "next/link";
 
 export default function Register() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [message, setMessage] = useState("");
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage("");
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          phone,
-        },
-      },
-    });
-
-    if (error) {
-      setMessage("❌ " + error.message);
-    } else {
-      setMessage("✅ Registration successful! Check your email.");
-      setTimeout(() => router.push("/auth/login"), 2500);
-    }
-  };
-
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Register</h1>
-      <form onSubmit={handleRegister} className="space-y-4">
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full border p-2 rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="tel"
-          placeholder="Phone Number"
-          className="w-full border p-2 rounded"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full border p-2 rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-100 p-6">
+      <h1 className="text-4xl font-bold mb-4">Register on Finverg</h1>
+      <p className="mb-6 text-lg text-gray-600">Create an account to start tracking your investments</p>
 
-        <button
-          type="submit"
-          className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-        >
-          Register
-        </button>
-
-        {message && (
-          <p className={`p-2 text-center ${message.startsWith("✅") ? "text-green-700" : "text-red-700"}`}>
-            {message}
-          </p>
-        )}
+      <form className="flex flex-col gap-4 w-full max-w-sm">
+        <input type="email" placeholder="Email" className="p-2 border rounded-md" />
+        <input type="password" placeholder="Password" className="p-2 border rounded-md" />
+        <input type="password" placeholder="Confirm Password" className="p-2 border rounded-md" />
+        <button className="bg-black text-white p-2 rounded-md hover:bg-gray-800">Register</button>
       </form>
+
+      <p className="mt-4 text-sm text-gray-500">
+        Already have an account?{" "}
+        <Link href="/login" className="text-blue-500 underline">
+          Login
+        </Link>
+      </p>
     </div>
   );
 }
