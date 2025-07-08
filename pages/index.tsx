@@ -1,76 +1,74 @@
-import { useEffect } from "react";
-import { useRouter } from "next/router";
-import { supabase } from "../lib/supabase";
-import Link from "next/link";
-import { motion } from "framer-motion";
+import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabase';
+import Link from 'next/link';
+import Head from 'next/head';
 
 export default function Home() {
   const router = useRouter();
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) router.push("/dashboard");
-    };
-    checkSession();
-  }, []);
-
   const handleArbitrageClick = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      router.push("/arbitrage");
+      router.push('/arbitrage');
     } else {
-      router.push("/auth/login");
+      router.push('/login');
     }
   };
 
+  const handleEarnClick = () => {
+    alert("Earn feature coming soon!"); // Replace with routing or logic later
+  };
+
   return (
-    <div
-      className="min-h-screen bg-cover bg-center text-white"
-      style={{ backgroundImage: "url('/bg-image.jpg')" }} // Place image in /public
-    >
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black bg-opacity-60 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">
+    <>
+      <Head>
+        <title>Welcome to Finverg</title>
+      </Head>
+
+      <div className="relative min-h-screen bg-cover bg-center" style={{ backgroundImage: "url('/bg.jpg')" }}>
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center text-white px-6 py-10 min-h-screen">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4">
             Welcome to <span className="text-purple-400">Finverg</span>
           </h1>
-          <p className="mb-8 text-lg md:text-xl drop-shadow-sm">
-            Securely invest, track returns by phase, and grow smarter. 💸
+          <p className="text-xl md:text-2xl max-w-2xl mb-10">
+            Securely invest, track returns by investment phase, and grow your wealth smarter with analytics-driven insights.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/auth/login" className="bg-blue-600 px-6 py-3 rounded text-white hover:bg-blue-700 transition">
-              Login
+          {/* Buttons */}
+          <div className="flex flex-wrap justify-center gap-4 mb-10">
+            <Link href="/auth/login">
+              <button className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-lg shadow-lg text-lg">
+                Login
+              </button>
             </Link>
-            <Link href="/auth/register" className="bg-green-600 px-6 py-3 rounded text-white hover:bg-green-700 transition">
-              Register
+            <Link href="/auth/register">
+              <button className="bg-green-600 hover:bg-green-700 transition px-6 py-3 rounded-lg shadow-lg text-lg">
+                Register
+              </button>
             </Link>
             <button
               onClick={handleArbitrageClick}
-              className="bg-purple-600 px-6 py-3 rounded text-white hover:bg-purple-700 transition"
+              className="bg-purple-600 hover:bg-purple-700 transition px-6 py-3 rounded-lg shadow-lg text-lg"
             >
               Arbitrage
             </button>
+            <button
+              onClick={handleEarnClick}
+              className="bg-yellow-500 hover:bg-yellow-600 transition px-6 py-3 rounded-lg shadow-lg text-lg"
+            >
+              Earn
+            </button>
           </div>
-        </motion.div>
 
-        <footer className="mt-16 text-sm text-center text-gray-300">
-          <p className="mb-1">🔒 All transactions are securely stored and transparent.</p>
-          <p>
-            📞 Need help? Contact support or join our Telegram community.
-            <br />
-            💬 <a href="https://t.me/finverg" target="_blank" className="underline text-blue-300">Join Telegram</a> | 
-            📧 <a href="mailto:support@finverg.com" className="underline text-blue-300">support@finverg.com</a>
-          </p>
-        </footer>
+          <div className="text-sm opacity-80">
+            💬 <a href="https://t.me/finverg" className="underline">Join Telegram</a> | 📧 <a href="mailto:support@finverg.com" className="underline">support@finverg.com</a>
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
