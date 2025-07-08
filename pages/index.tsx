@@ -17,6 +17,15 @@ export default function Home() {
     checkSession();
   }, []);
 
+  const handleArbitrageClick = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      router.push("/arbitrage");
+    } else {
+      router.push("/auth/login");
+    }
+  };
+
   return (
     <div
       className="min-h-screen bg-cover bg-center text-white"
@@ -30,19 +39,25 @@ export default function Home() {
           className="text-center"
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">
-            Welcome to Finverg
+            Welcome to <span className="text-purple-400">Finverg</span>
           </h1>
           <p className="mb-8 text-lg md:text-xl drop-shadow-sm">
             Securely invest, track returns by phase, and grow smarter. 💸
           </p>
 
-          <div className="space-x-4">
+          <div className="flex flex-wrap justify-center gap-4">
             <Link href="/auth/login" className="bg-blue-600 px-6 py-3 rounded text-white hover:bg-blue-700 transition">
               Login
             </Link>
             <Link href="/auth/register" className="bg-green-600 px-6 py-3 rounded text-white hover:bg-green-700 transition">
               Register
             </Link>
+            <button
+              onClick={handleArbitrageClick}
+              className="bg-purple-600 px-6 py-3 rounded text-white hover:bg-purple-700 transition"
+            >
+              Arbitrage
+            </button>
           </div>
         </motion.div>
 
