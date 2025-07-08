@@ -54,23 +54,48 @@ export default function Dashboard() {
     router.push("/auth/login");
   };
 
+  const handleArbitrageClick = () => {
+    alert("🔍 Arbitrage section coming soon!");
+    // router.push("/arbitrage");
+  };
+
+  const handleEarnClick = () => {
+    alert("💰 Earn section coming soon!");
+    // router.push("/earn");
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">📊 Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-red-600 hover:underline"
-        >
+        <button onClick={handleLogout} className="text-sm text-red-600 hover:underline">
           Logout
         </button>
       </div>
 
+      {/* Action Buttons */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={handleArbitrageClick}
+          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+        >
+          🔍 Arbitrage
+        </button>
+        <button
+          onClick={handleEarnClick}
+          className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+        >
+          💰 Earn
+        </button>
+      </div>
+
+      {/* Portfolio */}
       <div className="my-4">
         <p>💰 Portfolio Value: ₹{total}</p>
         <p className="text-green-600">📈 Gains: ₹{gain} (daily/phase)</p>
       </div>
 
+      {/* Filter */}
       <div className="mb-4">
         <label className="mr-2">Filter:</label>
         <select
@@ -85,13 +110,16 @@ export default function Dashboard() {
         </select>
       </div>
 
+      {/* Investment List */}
       {investments.length === 0 ? (
         <p>No investments found.</p>
       ) : (
         <div className="space-y-4">
           {investments.map((inv) => (
             <div key={inv.id} className="border p-4 rounded bg-white shadow">
-              <p className="font-medium">₹{inv.amount} - {inv.phase} via {inv.method}</p>
+              <p className="font-medium">
+                ₹{inv.amount} - {inv.phase} via {inv.method}
+              </p>
               <p className="text-sm">
                 TXN: {inv.transaction_id || "N/A"} | Date: {new Date(inv.created_at).toLocaleDateString()}
               </p>
@@ -121,7 +149,7 @@ export default function Dashboard() {
       <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t">
         <p>📞 Need help? Contact support or join our Telegram community.</p>
         <p>
-          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
+          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> |{" "}
           📧 <a href="mailto:support@finverg.com" className="text-blue-600 underline">support@finverg.com</a>
         </p>
       </footer>
