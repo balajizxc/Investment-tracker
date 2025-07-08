@@ -9,14 +9,10 @@ export default function Home() {
   const handleArbitrageClick = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      router.push('/arbitrage');
+      router.push('/dashboard'); // Navigate to dashboard if logged in
     } else {
-      router.push('/login');
+      router.push('/auth/login'); // Redirect to login if not authenticated
     }
-  };
-
-  const handleEarnClick = () => {
-    alert("Earn feature coming soon!"); // Replace with routing or logic later
   };
 
   return (
@@ -25,7 +21,10 @@ export default function Home() {
         <title>Welcome to Finverg</title>
       </Head>
 
-      <div className="relative min-h-screen bg-cover bg-center" style={{ backgroundImage: "url('/bg.jpg')" }}>
+      <div
+        className="relative min-h-screen bg-cover bg-center"
+        style={{ backgroundImage: "url('/bg.jpg')" }}
+      >
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black bg-opacity-60"></div>
 
@@ -39,33 +38,30 @@ export default function Home() {
           </p>
 
           {/* Buttons */}
-          <div className="flex flex-wrap justify-center gap-4 mb-10">
+          <div className="flex flex-wrap justify-center gap-6 mb-12">
             <Link href="/auth/login">
               <button className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-lg shadow-lg text-lg">
                 Login
               </button>
             </Link>
+
             <Link href="/auth/register">
               <button className="bg-green-600 hover:bg-green-700 transition px-6 py-3 rounded-lg shadow-lg text-lg">
                 Register
               </button>
             </Link>
+
             <button
               onClick={handleArbitrageClick}
               className="bg-purple-600 hover:bg-purple-700 transition px-6 py-3 rounded-lg shadow-lg text-lg"
             >
               Arbitrage
             </button>
-            <button
-              onClick={handleEarnClick}
-              className="bg-yellow-500 hover:bg-yellow-600 transition px-6 py-3 rounded-lg shadow-lg text-lg"
-            >
-              Earn
-            </button>
           </div>
 
+          {/* Footer */}
           <div className="text-sm opacity-80">
-            💬 <a href="https://t.me/finverg" className="underline">Join Telegram</a> | 📧 <a href="mailto:support@finverg.com" className="underline">support@finverg.com</a>
+            💬 <a href="https://t.me/finverg" className="underline">Join Telegram</a> | 📧 support@finverg.com
           </div>
         </div>
       </div>
