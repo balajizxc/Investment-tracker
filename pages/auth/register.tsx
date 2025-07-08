@@ -19,21 +19,24 @@ export default function Register() {
       email,
       password,
       options: {
-        data: {
-          phone,
-        },
+        data: { phone },
       },
     });
 
     if (error) {
       if (error.message.includes("User already registered")) {
-        setMessage("❌ Email already registered. Please login.");
+        setMessage("❌ This email is already registered. Please log in or reset your password.");
       } else {
         setMessage("❌ " + error.message);
       }
     } else {
-      setMessage("✅ Registration successful! Please check your email to confirm.");
-      setTimeout(() => router.push("/auth/login"), 2500);
+      if (data.user?.identities?.length === 0) {
+        // Already registered but trying again
+        setMessage("⚠️ Email already registered. Please log in.");
+      } else {
+        setMessage("✅ Registration successful! Please check your email to confirm.");
+        setTimeout(() => router.push("/auth/login"), 2500);
+      }
     }
 
     setLoading(false);
@@ -83,7 +86,11 @@ export default function Register() {
         {message && (
           <p
             className={`text-center p-2 rounded ${
-              message.startsWith("✅") ? "text-green-700 bg-green-100" : "text-red-700 bg-red-100"
+              message.startsWith("✅")
+                ? "text-green-700 bg-green-100"
+                : message.startsWith("⚠️")
+                ? "text-yellow-800 bg-yellow-100"
+                : "text-red-700 bg-red-100"
             }`}
           >
             {message}
