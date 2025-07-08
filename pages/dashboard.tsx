@@ -54,48 +54,26 @@ export default function Dashboard() {
     router.push("/auth/login");
   };
 
-  const handleArbitrageClick = () => {
-    alert("🔍 Arbitrage section coming soon!");
-    // router.push("/arbitrage");
-  };
-
-  const handleEarnClick = () => {
-    alert("💰 Earn section coming soon!");
-    // router.push("/earn");
-  };
-
   return (
     <div className="max-w-3xl mx-auto p-6">
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">📊 Dashboard</h1>
-        <button onClick={handleLogout} className="text-sm text-red-600 hover:underline">
+        <button
+          onClick={handleLogout}
+          className="text-sm text-red-600 hover:underline"
+        >
           Logout
         </button>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-4 mb-6">
-        <button
-          onClick={handleArbitrageClick}
-          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-        >
-          🔍 Arbitrage
-        </button>
-        <button
-          onClick={handleEarnClick}
-          className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-        >
-          💰 Earn
-        </button>
-      </div>
-
-      {/* Portfolio */}
+      {/* Summary */}
       <div className="my-4">
         <p>💰 Portfolio Value: ₹{total}</p>
         <p className="text-green-600">📈 Gains: ₹{gain} (daily/phase)</p>
       </div>
 
-      {/* Filter */}
+      {/* Filters */}
       <div className="mb-4">
         <label className="mr-2">Filter:</label>
         <select
@@ -121,7 +99,8 @@ export default function Dashboard() {
                 ₹{inv.amount} - {inv.phase} via {inv.method}
               </p>
               <p className="text-sm">
-                TXN: {inv.transaction_id || "N/A"} | Date: {new Date(inv.created_at).toLocaleDateString()}
+                TXN: {inv.transaction_id || "N/A"} | Date:{" "}
+                {new Date(inv.created_at).toLocaleDateString()}
               </p>
               <p
                 className={`${
@@ -139,17 +118,33 @@ export default function Dashboard() {
         </div>
       )}
 
-      <a
-        href="/invest"
-        className="inline-block mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        ➕ Make New Investment
-      </a>
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-4 mt-6">
+        <a
+          href="/invest"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          ➕ Make New Investment
+        </a>
+        <a
+          href="/arbitrage"
+          className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+        >
+          🔁 Arbitrage
+        </a>
+        <button
+          onClick={() => alert("Coming soon...")}
+          className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+        >
+          💸 Earn
+        </button>
+      </div>
 
+      {/* Footer */}
       <footer className="mt-10 py-4 text-center text-sm text-gray-600 border-t">
         <p>📞 Need help? Contact support or join our Telegram community.</p>
         <p>
-          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> |{" "}
+          💬 <a href="https://t.me/finverg" target="_blank" className="text-blue-600 underline">Join Telegram</a> | 
           📧 <a href="mailto:support@finverg.com" className="text-blue-600 underline">support@finverg.com</a>
         </p>
       </footer>
