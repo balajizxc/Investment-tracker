@@ -15,6 +15,11 @@ export default function Home() {
     }
   };
 
+  const handleEarnClick = () => {
+    alert("🔧 Earn section coming soon!");
+    // router.push('/earn'); // Uncomment this when earn page is ready
+  };
+
   return (
     <>
       <Head>
@@ -56,6 +61,13 @@ export default function Home() {
               className="bg-purple-600 hover:bg-purple-700 transition px-6 py-3 rounded-lg shadow-lg text-lg"
             >
               Arbitrage
+            </button>
+
+            <button
+              onClick={handleEarnClick}
+              className="bg-yellow-500 hover:bg-yellow-600 transition px-6 py-3 rounded-lg shadow-lg text-lg"
+            >
+              Earn
             </button>
           </div>
 
