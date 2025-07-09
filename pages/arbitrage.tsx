@@ -1,91 +1,99 @@
-// pages/arbitrage.tsx
+import { useState } from "react";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { supabase } from "../lib/supabase";
-
-export default function Arbitrage() {
-  const router = useRouter();
+export default function ArbitragePage() {
+  const exchanges = [
+    "Binance",
+    "Bitget",
+    "Weex",
+    "MEXC",
+    "Bybit",
+    "Gate.io",
+    "BitMart",
+    "KuCoin",
+    "LBank",
+    "OKX",
+  ];
 
   const [fromExchange, setFromExchange] = useState("");
   const [toExchange, setToExchange] = useState("");
   const [profitFrom, setProfitFrom] = useState("");
   const [profitTo, setProfitTo] = useState("");
-  const [sortBy, setSortBy] = useState("high");
-
-  useEffect(() => {
-    async function checkUser() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) router.push("/auth/login");
-    }
-    checkUser();
-  }, [router]);
+  const [sortOrder, setSortOrder] = useState("highToLow");
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">🔁 Arbitrage Opportunity Finder</h1>
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white shadow rounded">
+      <h1 className="text-2xl font-bold mb-4 text-center">🔁 Arbitrage Checker</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="space-y-4">
         <div>
-          <label className="block text-sm mb-1 font-medium">From Exchange</label>
-          <input
-            type="text"
-            placeholder="e.g. Binance"
+          <label className="block font-medium mb-1">From Exchange</label>
+          <select
             value={fromExchange}
             onChange={(e) => setFromExchange(e.target.value)}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1 font-medium">To Exchange</label>
-          <input
-            type="text"
-            placeholder="e.g. KuCoin"
-            value={toExchange}
-            onChange={(e) => setToExchange(e.target.value)}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1 font-medium">Profit From (%)</label>
-          <input
-            type="number"
-            placeholder="e.g. 0.5"
-            value={profitFrom}
-            onChange={(e) => setProfitFrom(e.target.value)}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1 font-medium">Profit To (%)</label>
-          <input
-            type="number"
-            placeholder="e.g. 5.0"
-            value={profitTo}
-            onChange={(e) => setProfitTo(e.target.value)}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block text-sm mb-1 font-medium">Sort By</label>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="w-full border rounded p-2"
           >
-            <option value="high">High to Low Profit</option>
-            <option value="low">Low to High Profit</option>
+            <option value="">Select exchange</option>
+            {exchanges.map((ex) => (
+              <option key={ex} value={ex}>{ex}</option>
+            ))}
           </select>
         </div>
-      </div>
 
-      <div className="text-right">
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow">
-          🔍 Check Arbitrage
+        <div>
+          <label className="block font-medium mb-1">To Exchange</label>
+          <select
+            value={toExchange}
+            onChange={(e) => setToExchange(e.target.value)}
+            className="w-full border rounded p-2"
+          >
+            <option value="">Select exchange</option>
+            {exchanges.map((ex) => (
+              <option key={ex} value={ex}>{ex}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Profit From</label>
+          <input
+            type="number"
+            placeholder="Enter profit from %"
+            value={profitFrom}
+            onChange={(e) => setProfitFrom(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Profit To</label>
+          <input
+            type="number"
+            placeholder="Enter profit to %"
+            value={profitTo}
+            onChange={(e) => setProfitTo(e.target.value)}
+            className="w-full border rounded p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Sort By</label>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="w-full border rounded p-2"
+          >
+            <option value="highToLow">High to Low Profit</option>
+            <option value="lowToHigh">Low to High Profit</option>
+          </select>
+        </div>
+
+        <button
+          className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 mt-4"
+          onClick={() => {
+            alert("Feature coming soon...");
+          }}
+        >
+          🔍 Check Arbitrage Opportunities
         </button>
       </div>
     </div>
